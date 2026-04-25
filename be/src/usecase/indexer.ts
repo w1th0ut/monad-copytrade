@@ -1,6 +1,7 @@
 import {
   activeTrades,
   leaders as seedLeaders,
+  leaderStats,
   priceCache,
   stats,
   subscriptions,
@@ -46,14 +47,20 @@ export async function getLeaders() {
       ),
     ]);
 
-    const result = addresses.map((addr, i) => ({
-      address: addr,
-      username: usernames[i] || addr.slice(0, 8),
-      style: "—",
-      winRate: 0,
-      totalPnl: 0,
-      followers: followerLists[i].length,
-    }));
+    const result = addresses.map((addr, i) => {
+      const ls = leaderStats.get(addr.toLowerCase());
+      const totalClosed = ls ? ls.wins + ls.losses : 0;
+      const winRate =
+        totalClosed > 0 ? Math.round((ls!.wins / totalClosed) * 100) : 0;
+      return {
+        address: addr,
+        username: usernames[i] || addr.slice(0, 8),
+        style: "—",
+        winRate,
+        totalPnl: ls?.realizedPnl ?? 0,
+        followers: followerLists[i].length,
+      };
+    });
 
     // Update totalFollowers in stats from chain data
     stats.totalFollowers = followerLists.reduce((sum, list) => sum + list.length, 0);

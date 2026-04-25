@@ -64,8 +64,20 @@ export function LeadersOverview() {
                     <td className="px-4 py-4 font-mono text-foreground">
                       {leader.winRate}%
                     </td>
-                    <td className="px-4 py-4 font-mono text-positive">
-                      ${leader.totalPnl.toLocaleString()}
+                    <td
+                      className={`px-4 py-4 font-mono ${
+                        leader.totalPnl > 0
+                          ? "text-positive"
+                          : leader.totalPnl < 0
+                            ? "text-negative"
+                            : "text-foreground"
+                      }`}
+                    >
+                      {leader.totalPnl > 0 ? "+" : ""}$
+                      {leader.totalPnl.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </td>
                     <td className="px-4 py-4 font-mono text-foreground">
                       {leader.followers}

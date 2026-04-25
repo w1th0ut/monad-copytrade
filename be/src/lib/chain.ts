@@ -2,7 +2,12 @@ import { createPublicClient, http, parseAbi } from "viem";
 import { env } from "../config/env.js";
 
 export const publicClient = createPublicClient({
-  transport: http(env.MONAD_RPC_URL),
+  transport: http(env.MONAD_RPC_URL, {
+    // No batching — Monad RPC rejects batched eth_call with "gas exceeds
+    // provider limit" because viem packs a default gas estimate per request.
+    // We compensate by serializing calls in the indexer (sequential await).
+    retryCount: 0,
+  }),
 });
 
 // ─── CopyTradeRegistry ABI ────────────────────────────────────────

@@ -36,6 +36,13 @@ export type ActiveTrade = {
   status: "open" | "closed";
 };
 
+export type LeaderStats = {
+  address: string;
+  wins: number;
+  losses: number;
+  realizedPnl: number;
+};
+
 export type VaultActivity = {
   id: number;
   event: "loss_vaulted" | "yield_claimed" | "fee_split";
@@ -64,6 +71,9 @@ export const leaders: LeaderProfile[] = [];
 export const subscriptions: Subscription[] = [];
 
 export const activeTrades: ActiveTrade[] = [];
+
+/** Aggregated realized PnL/win-rate per leader address (lowercased key). */
+export const leaderStats = new Map<string, LeaderStats>();
 
 export const priceCache = new Map<string, { price: number; updatedAt: number }>([
   ["ETH/USD", { price: 0, updatedAt: 0 }],

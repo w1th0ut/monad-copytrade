@@ -305,6 +305,27 @@ export function useOpenPosition() {
   return { openPosition, isPending, isConfirming, hash };
 }
 
+export function useClosePosition() {
+  const { writeContract, data: hash, isPending } = useWriteContract();
+  const { isLoading: isConfirming } = useWaitForTransactionReceipt({ hash });
+
+  const closePosition = useCallback(
+    (positionId: number | bigint, exitPriceUsd: number) => {
+      if (!protocolAddresses.tradingEngine) return;
+      const exit = BigInt(Math.round(exitPriceUsd * 1e8));
+      writeContract({
+        address: protocolAddresses.tradingEngine,
+        abi: tradingEngineAbi,
+        functionName: "closePosition",
+        args: [BigInt(positionId), exit],
+      });
+    },
+    [writeContract],
+  );
+
+  return { closePosition, isPending, isConfirming, hash };
+}
+
 export function useRegisterLeader() {
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming } = useWaitForTransactionReceipt({ hash });

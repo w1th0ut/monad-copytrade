@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { keccak256, toBytes } from "viem";
 import { useAccount } from "wagmi";
+import { useQuery } from "@tanstack/react-query";
 import {
   useIdleBalance,
   useOpenPosition,
 } from "@/hooks/use-monad-contract";
 import { useProtocolReadiness } from "@/hooks/use-protocol-readiness";
+import { api } from "@/lib/api";
 
 const PAIRS = [
   { label: "ETH/USD", defaultPrice: 3200 },
@@ -23,8 +25,14 @@ interface LeaderOpenPositionProps {
 export function LeaderOpenPosition({ username }: LeaderOpenPositionProps) {
   const { address } = useAccount();
   const { isConnected, isOnMonad, contractsReady } = useProtocolReadiness();
-  const { data: idleBalance } = useIdleBalance();
+  const { data: idleBalance, refetch: refetchIdle } = useIdleBalance();
   const { openPosition, isPending, isConfirming, hash } = useOpenPosition();
+
+  const { data: stats } = useQuery({
+    queryKey: ["stats"],
+    queryFn: api.getStats,
+    refetchInterval: 1_000,
+  });
 
   const [pair, setPair] = useState<string>(PAIRS[0].label);
   const [isLong, setIsLong] = useState(true);
@@ -32,6 +40,24 @@ export function LeaderOpenPosition({ username }: LeaderOpenPositionProps) {
   const [leverage, setLeverage] = useState(5);
   const [entryPrice, setEntryPrice] = useState<number>(PAIRS[0].defaultPrice);
   const [stopLossPct, setStopLossPct] = useState(10); // 10% below entry for longs
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  // Sync entryPrice with current market price from stats
+  useEffect(() => {
+    if (stats?.prices && stats.prices[pair]) {
+      setEntryPrice(stats.prices[pair].price);
+    }
+  }, [stats, pair]);
+
+  // Auto-refetch idle balance and reset UI when transaction is confirmed
+  useEffect(() => {
+    if (hash && !isConfirming) {
+      refetchIdle();
+      setShowSuccess(true);
+      const timer = setTimeout(() => setShowSuccess(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [hash, isConfirming, refetchIdle]);
 
   const isRegistered = Boolean(username && (username as string).length > 0);
   const ready = isConnected && isOnMonad && contractsReady;
@@ -43,14 +69,20 @@ export function LeaderOpenPosition({ username }: LeaderOpenPositionProps) {
 
   const handleSubmit = () => {
     if (!ready || !address) return;
+
+    // Use latest price from stats if available, fallback to state
+    const currentPrice = stats?.prices?.[pair]?.price ?? entryPrice;
+
     openPosition({
       leader: address,
       pairId: keccak256(toBytes(pair)),
       isLong,
       marginUsdc: margin,
       leverage,
-      entryPrice,
-      stopLossPrice,
+      entryPrice: currentPrice,
+      stopLossPrice: isLong
+        ? currentPrice * (1 - stopLossPct / 100)
+        : currentPrice * (1 + stopLossPct / 100),
     });
   };
 
@@ -74,16 +106,12 @@ export function LeaderOpenPosition({ username }: LeaderOpenPositionProps) {
         </p>
       </div>
 
-      <div className="grid gap-px bg-line md:grid-cols-[1fr_1fr_1fr_1fr]">
+      <div className="grid gap-px bg-line md:grid-cols-3">
         <PanelCell label="Pair">
           <select
             value={pair}
             onChange={(e) => {
-              const next = PAIRS.find((p) => p.label === e.target.value);
-              if (next) {
-                setPair(next.label);
-                setEntryPrice(next.defaultPrice);
-              }
+              setPair(e.target.value);
             }}
             className="w-full rounded-2xl border border-line bg-panel px-3 py-2 text-sm text-foreground outline-none focus:border-accent"
           >
@@ -118,16 +146,6 @@ export function LeaderOpenPosition({ username }: LeaderOpenPositionProps) {
               Short
             </button>
           </div>
-        </PanelCell>
-
-        <PanelCell label="Entry price (USD)">
-          <input
-            type="number"
-            step="0.01"
-            value={entryPrice}
-            onChange={(e) => setEntryPrice(Number(e.target.value))}
-            className="w-full rounded-2xl border border-line bg-panel px-3 py-2 text-sm text-foreground outline-none focus:border-accent"
-          />
         </PanelCell>
 
         <PanelCell label="Margin (USDC)">
@@ -166,6 +184,17 @@ export function LeaderOpenPosition({ username }: LeaderOpenPositionProps) {
       </div>
 
       <div className="border-t border-line bg-panel px-4 py-4 text-xs">
+        <Row
+          label="Market price (Pyth)"
+          value={
+            entryPrice > 0
+              ? `$${entryPrice.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}`
+              : "Fetching..."
+          }
+        />
         <Row label="Notional size" value={`$${notional.toLocaleString()}`} />
         <Row
           label="Stop-loss price"
@@ -192,8 +221,8 @@ export function LeaderOpenPosition({ username }: LeaderOpenPositionProps) {
             ? "Confirm in wallet..."
             : isConfirming
               ? "Opening position..."
-              : hash
-                ? "Position opened"
+              : showSuccess
+                ? "Position opened!"
                 : !ready
                   ? "Wallet not ready"
                   : `Open ${isLong ? "long" : "short"} ${pair}`}

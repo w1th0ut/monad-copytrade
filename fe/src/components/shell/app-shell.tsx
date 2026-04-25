@@ -1,8 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { WalletActionButton } from "@/components/wallet/wallet-action-button";
 import { WalletStatusChip } from "@/components/wallet/wallet-status-chip";
 import { marketSnapshot } from "@/lib/mock-data";
+import { api } from "@/lib/api";
 
 type AppShellProps = {
   active: "trade" | "leaders" | "vault" | "account";
@@ -25,12 +29,27 @@ function isActive(
   return active === key;
 }
 
+const fmtPrice = (n: number) =>
+  `$${n.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
 export function AppShell({
   active,
   children,
   title,
   description,
 }: AppShellProps) {
+  const { data: stats } = useQuery({
+    queryKey: ["stats"],
+    queryFn: api.getStats,
+    refetchInterval: 1_000,
+  });
+
+  const ethPrice = stats?.prices?.["ETH/USD"]?.price;
+  const markPriceLabel = ethPrice && ethPrice > 0 ? fmtPrice(ethPrice) : "—";
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <div className="surface-grid pointer-events-none absolute inset-0 opacity-20" />
@@ -92,10 +111,10 @@ export function AppShell({
                 {marketSnapshot.symbol}
               </span>
               <span className="font-mono text-sm text-foreground">
-                {marketSnapshot.markPrice}
+                {markPriceLabel}
               </span>
             </div>
-            <StatCell label="Index" value={marketSnapshot.indexPrice} />
+            <StatCell label="Index" value={markPriceLabel} />
             <StatCell
               label="24h"
               value={marketSnapshot.change24h}

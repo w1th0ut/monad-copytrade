@@ -19,6 +19,10 @@ const envSchema = z.object({
   KEEPER_PRIVATE_KEY: z.string().optional(),
   PYTH_ENDPOINT: z.string().url().default("https://hermes.pyth.network"),
   INTERNAL_SYNC_KEY: z.string().optional(),
+  START_BLOCK: z
+    .string()
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
   USDC_ADDRESS: addressSchema,
   VAULT_ADDRESS: addressSchema,
   TRADING_ENGINE_ADDRESS: addressSchema,
