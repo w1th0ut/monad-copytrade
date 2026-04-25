@@ -1,26 +1,24 @@
-import express from "express";
+import { createServer } from "node:http";
 import { env } from "./config/env.js";
-import { syncFromChainSnapshot } from "./usecase/indexer.js";
+import { createApi } from "./delivery/api.js";
+import { KeeperService } from "./usecase/keeper.js";
 
-const app = express();
+const keeper = new KeeperService();
+const app = createApi(keeper);
+const server = createServer(app);
 
-app.get("/health", (_req, res) => {
-  res.json({ status: "ok" });
+keeper.start();
+
+server.listen(env.PORT, () => {
+  console.log(`nolosstrade backend listening on http://localhost:${env.PORT}`);
 });
 
-app.post("/api/v1/sync", (_req, res) => {
-  const data = syncFromChainSnapshot();
-  res.json(data);
-});
+function shutdown() {
+  keeper.stop();
+  server.close(() => {
+    process.exit(0);
+  });
+}
 
-const server = app.listen(env.PORT, () => {
-  console.log(`[be] listening on :${env.PORT}`);
-});
-
-const shutdown = (signal: string) => {
-  console.log(`[be] received ${signal}, shutting down`);
-  server.close(() => process.exit(0));
-};
-
-process.on("SIGTERM", () => shutdown("SIGTERM"));
-process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);

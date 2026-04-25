@@ -43,12 +43,12 @@ Commit message format: `feat(<scope>): <short summary>` where scope ∈ {`repo`,
 
 ## 5. CopyTrade Feature Slice (commit 5)
 
-- [ ] 5.1 SC: Copy `CopyTradeRegistry.sol`, implement follow/unfollow, mirror trade, and tests
-- [ ] 5.2 BE: Add REST API endpoints (`/api/v1/leaders`, `/api/v1/user/:address/vault`, `/api/v1/stats`)
-- [ ] 5.3 FE: Add leaders page `/app/leaders` with leaderboard and copy-trade modal
-- [ ] 5.4 FE: Add account page `/app/account` with deposit/withdraw and history
-- [ ] 5.5 Verify all workspaces build
-- [ ] 5.6 Commit: `feat(copytrade): add CopyTradeRegistry SC, BE Leaders API, and FE views`
+- [x] 5.1 SC: Copy `CopyTradeRegistry.sol`, implement follow/unfollow, mirror trade, and tests
+- [x] 5.2 BE: Add REST API endpoints (`/api/v1/leaders`, `/api/v1/user/:address/vault`, `/api/v1/stats`)
+- [x] 5.3 FE: Add leaders page `/app/leaders` with leaderboard and copy-trade modal
+- [x] 5.4 FE: Add account page `/app/account` with deposit/withdraw and history
+- [x] 5.5 Verify all workspaces build
+- [x] 5.6 Commit: `feat(copytrade): add CopyTradeRegistry SC, BE Leaders API, and FE views`
 
 ## 6. End-to-End Glue & Demo (commit 6)
 
