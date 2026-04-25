@@ -1,0 +1,44 @@
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+
+async function fetchApi<T>(path: string): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`);
+  if (!res.ok) throw new Error(`API ${path}: ${res.status}`);
+  const json = await res.json();
+  return json.data as T;
+}
+
+export type StatsResponse = {
+  totalTvl: number;
+  totalVolume: number;
+  totalYieldDistributed: number;
+  totalFollowers: number;
+  keeperMode: string;
+  lastSyncAt: string;
+  prices: Record<string, { price: number; updatedAt: number }>;
+};
+
+export type LeaderResponse = {
+  address: string;
+  username: string;
+  style: string;
+  winRate: number;
+  totalPnl: number;
+  followers: number;
+};
+
+export type UserVaultResponse = {
+  address: string;
+  totalDeposit: number;
+  totalClaimedYield: number;
+  vUsdBalance: number;
+  claimableYield: number;
+  followerConfigCount: number;
+  shareOfVaultBps: number;
+};
+
+export const api = {
+  getStats: () => fetchApi<StatsResponse>("/api/v1/stats"),
+  getLeaders: () => fetchApi<LeaderResponse[]>("/api/v1/leaders"),
+  getUserVault: (address: string) =>
+    fetchApi<UserVaultResponse>(`/api/v1/user/${address}/vault`),
+};

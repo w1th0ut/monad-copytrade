@@ -1,1 +1,130 @@
 @import "tailwindcss";
+
+:root {
+  --background: #060910;
+  --foreground: #edf2ff;
+  --canvas: #0a0f18;
+  --panel: #0e1422;
+  --panel-strong: #131c2e;
+  --line: rgba(129, 149, 186, 0.18);
+  --muted: #8d9ab6;
+  --accent: #74a7ff;
+  --accent-soft: rgba(116, 167, 255, 0.14);
+  --positive: #2ed8a3;
+  --negative: #ff6177;
+  --warning: #f0c56c;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-canvas: var(--canvas);
+  --color-panel: var(--panel);
+  --color-panel-strong: var(--panel-strong);
+  --color-line: var(--line);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-warning: var(--warning);
+  --font-sans: var(--font-space-grotesk);
+  --font-mono: var(--font-ibm-plex-mono);
+}
+
+* {
+  border-color: var(--line);
+}
+
+html {
+  background:
+    radial-gradient(circle at top left, rgba(116, 167, 255, 0.11), transparent 26%),
+    radial-gradient(circle at top right, rgba(46, 216, 163, 0.08), transparent 22%),
+    var(--background);
+}
+
+body {
+  background: transparent;
+  color: var(--foreground);
+  font-family: var(--font-space-grotesk), sans-serif;
+}
+
+::selection {
+  background: rgba(116, 167, 255, 0.32);
+}
+
+a,
+button,
+input,
+select {
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+button {
+  cursor: pointer;
+}
+
+input[type="range"] {
+  accent-color: var(--positive);
+}
+
+.surface-grid {
+  background-image:
+    linear-gradient(rgba(129, 149, 186, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(129, 149, 186, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.fade-up {
+  animation: fade-up 720ms var(--ease-out) both;
+}
+
+.status-orb {
+  animation: status-pulse 2.4s infinite;
+}
+
+.ticker-flash {
+  animation: ticker-flash 4.8s ease-in-out infinite;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes status-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(46, 216, 163, 0.34);
+    opacity: 0.86;
+  }
+
+  50% {
+    box-shadow: 0 0 0 10px rgba(46, 216, 163, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes ticker-flash {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
+}

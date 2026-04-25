@@ -16,12 +16,12 @@ Commit message format: `feat(<scope>): <short summary>` where scope ∈ {`repo`,
 
 ## 2. FE Web3 Plumbing & App Shell (commit 2)
 
-- [ ] 2.1 Copy `reference/fe/src/lib/web3/` (monad-testnet, wagmi-config, contracts with placeholders)
-- [ ] 2.2 Copy `reference/fe/src/components/providers/` and mount wagmi + QueryClient in layout
-- [ ] 2.3 Copy hooks (`use-monad-contract`, `use-protocol-readiness`)
-- [ ] 2.4 Copy landing page and app shell components; stub `/app` route
-- [ ] 2.5 Verify `cd fe && npm run build` and UI works locally
-- [ ] 2.6 Commit: `feat(fe): add wagmi plumbing, landing page, and app shell`
+- [x] 2.1 Copy `reference/fe/src/lib/web3/` (monad-testnet, wagmi-config, contracts with placeholders)
+- [x] 2.2 Copy `reference/fe/src/components/providers/` and mount wagmi + QueryClient in layout
+- [x] 2.3 Copy hooks (`use-monad-contract`, `use-protocol-readiness`)
+- [x] 2.4 Copy landing page and app shell components; stub `/app` route
+- [x] 2.5 Verify `cd fe && npm run build` and UI works locally
+- [x] 2.6 Commit: `feat(fe): add wagmi plumbing, landing page, and app shell`
 
 ## 3. Vault Feature Slice (commit 3)
 
