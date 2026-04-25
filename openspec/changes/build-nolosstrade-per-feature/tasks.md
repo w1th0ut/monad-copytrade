@@ -25,13 +25,13 @@ Commit message format: `feat(<scope>): <short summary>` where scope ∈ {`repo`,
 
 ## 3. Vault Feature Slice (commit 3)
 
-- [ ] 3.1 SC: Copy `VUSD.sol`, `Vault.sol` (with stubs for TradingEngine/lossToLP if needed), and add tests
-- [ ] 3.2 SC: Implement `lockLossToLP`, `accumulateYield`, `claimYield` in `Vault.sol` and add tests
-- [ ] 3.3 BE: Add env config (`MONAD_RPC_URL`, etc.) and in-memory repository
-- [ ] 3.4 BE: Add viem event indexer subscribing to Vault events + sync endpoint
-- [ ] 3.5 FE: Add vault dashboard `/app/vault` and `vault-overview` components
-- [ ] 3.6 Verify all workspaces build (`forge build`, `npm run build` for BE/FE)
-- [ ] 3.7 Commit: `feat(vault): add Vault SC, BE indexer, and FE dashboard`
+- [x] 3.1 SC: Copy `VUSD.sol`, `Vault.sol` (with stubs for TradingEngine/lossToLP if needed), and add tests
+- [x] 3.2 SC: Implement `lockLossToLP`, `accumulateYield`, `claimYield` in `Vault.sol` and add tests
+- [x] 3.3 BE: Add env config (`MONAD_RPC_URL`, etc.) and in-memory repository
+- [x] 3.4 BE: Add viem event indexer subscribing to Vault events + sync endpoint
+- [x] 3.5 FE: Add vault dashboard `/app/vault` and `vault-overview` components
+- [x] 3.6 Verify all workspaces build (`forge build`, `npm run build` for BE/FE)
+- [x] 3.7 Commit: `feat(vault): add Vault SC, BE indexer, and FE dashboard`
 
 ## 4. Trading Engine Feature Slice (commit 4)
 

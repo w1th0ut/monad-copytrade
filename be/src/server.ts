@@ -1,6 +1,6 @@
 import express from "express";
-
-const port = Number(process.env.PORT ?? 4000);
+import { env } from "./config/env.js";
+import { syncFromChainSnapshot } from "./usecase/indexer.js";
 
 const app = express();
 
@@ -8,8 +8,13 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-const server = app.listen(port, () => {
-  console.log(`[be] listening on :${port}`);
+app.post("/api/v1/sync", (_req, res) => {
+  const data = syncFromChainSnapshot();
+  res.json(data);
+});
+
+const server = app.listen(env.PORT, () => {
+  console.log(`[be] listening on :${env.PORT}`);
 });
 
 const shutdown = (signal: string) => {
