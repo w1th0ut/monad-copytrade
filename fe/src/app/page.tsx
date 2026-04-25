@@ -24,7 +24,7 @@ export default function LandingPage() {
               <span className="h-4 w-1.5 translate-y-1 rounded-full bg-foreground/55" />
             </span>
             <span className="text-lg font-semibold tracking-[0.18em] uppercase">
-              Nolos
+              Null Loss
             </span>
           </Link>
           <nav className="hidden items-center gap-7 text-sm text-muted md:flex">
@@ -373,7 +373,7 @@ export default function LandingPage() {
               <span className="h-3 w-1.5 translate-y-1 rounded-full bg-foreground/55" />
             </span>
             <span className="text-sm font-semibold tracking-[0.18em] uppercase">
-              Nolos
+              Null Loss
             </span>
           </div>
           <p className="text-xs text-muted">

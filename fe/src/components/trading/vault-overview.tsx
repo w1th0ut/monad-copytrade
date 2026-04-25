@@ -20,74 +20,136 @@ import { api } from "@/lib/api";
 type VaultRow = {
   id: string;
   name: string;
-  category: "Loss-to-LP" | "Liquid Staking" | "Lending" | "Restaking";
+  category: "Loss-to-LP" | "Liquid Staking" | "Lending" | "Restaking" | "DeFi Yield";
   depositToken: string;
   depositSubLabel: string;
   tvl: string;
   tvlUsd: string;
-  cap?: string;
-  apy: string;
+  cap?: string | React.ReactNode;
+  apy: string | React.ReactNode;
   apyTone: "positive" | "muted";
-  rewardTags: string[];
-  composability: string[];
+  rewardTags: React.ReactNode[];
+  composability: React.ReactNode[];
   strategist: string;
+  strategistHasArrow?: boolean;
   status: "live" | "coming-soon";
+  depositIcon?: React.ReactNode;
+  strategistIcon?: React.ReactNode;
 };
 
 const FAKE_VAULTS: VaultRow[] = [
   {
-    id: "kintsu-mon",
-    name: "sMON Liquid Staking",
-    category: "Liquid Staking",
-    depositToken: "MON",
-    depositSubLabel: "Monad Mainnet",
-    tvl: "284.1K MON",
-    tvlUsd: "$1.42M",
-    apy: "5.21%",
+    id: "flare-xrp",
+    name: "Flare XRP Yield Vault",
+    category: "DeFi Yield",
+    depositToken: "FXRP",
+    depositSubLabel: "Flare Mainnet",
+    tvl: "29.96M FXRP",
+    tvlUsd: "$43,145,390",
+    cap: (
+      <div className="flex items-center gap-1.5 text-yellow-500">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-4 h-4 rounded-full border-2 border-yellow-500/20" />
+        <span className="font-semibold text-yellow-500">100%</span>
+      </div>
+    ),
+    apy: "0.69%",
     apyTone: "positive",
-    rewardTags: ["KIN"],
-    composability: ["NOLOS", "MGM", "CRV"],
-    strategist: "Kintsu",
-    status: "coming-soon",
+    rewardTags: [
+      <div key="5x" className="flex items-center gap-1 bg-[#004225] text-[#00ff88] rounded-full px-2 py-0.5 text-[10px] font-bold">
+        <div className="w-2 h-2 rounded-full border-2 border-[#00ff88]" />
+        5X
+      </div>,
+      <div key="fire" className="w-5 h-5 rounded-full bg-[#f97316] flex items-center justify-center text-[10px]">🔥</div>
+    ],
+    composability: [],
+    strategist: "Clearstar Labs",
+    status: "live",
+    depositIcon: (
+      <div className="relative">
+        <img src="/images/fXRP.svg" alt="fXRP" className="w-8 h-8 rounded-full object-cover" />
+        {/* <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#ff2a55] border-2 border-black flex items-center justify-center text-[8px] font-bold text-white">F</div> */}
+      </div>
+    ),
+    strategistIcon: <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center text-black text-[10px] font-bold">C</div>,
   },
   {
-    id: "apriori-eth",
-    name: "Restaked ETH Vault",
-    category: "Restaking",
+    id: "earn-ausd",
+    name: "earnAUD",
+    category: "DeFi Yield",
+    depositToken: "AUSD",
+    depositSubLabel: " ",
+    tvl: "35.49M AUSD",
+    tvlUsd: "$35,485,368",
+    cap: "—",
+    apy: (
+      <div className="flex items-center gap-1">
+        <span>7.50%</span>
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 text-positive"><path d="M12 0l2 8 8 2-8 2-2 8-2-8-8-2 8-2 2-8z"/></svg>
+      </div>
+    ),
+    apyTone: "positive",
+    rewardTags: [
+      <div key="5x" className="flex items-center gap-1 bg-[#004225] text-[#00ff88] rounded-full px-2 py-0.5 text-[10px] font-bold">
+        <div className="w-2 h-2 rounded-full border-2 border-[#00ff88]" />
+        5X
+      </div>,
+      <div key="tree" className="w-5 h-5 rounded-full bg-[#8b9467] flex items-center justify-center text-[10px]">🌲</div>
+    ],
+    composability: [
+      <div key="comp" className="flex items-center -space-x-1.5">
+        <div className="w-4 h-4 rounded-full bg-gray-600 border border-black z-10" />
+        <div className="w-4 h-4 rounded-full bg-blue-500 border border-black z-20" />
+        <div className="w-4 h-4 rounded-full bg-green-500 border border-black z-30" />
+        <div className="w-4 h-4 rounded-full bg-purple-500 border border-black z-40" />
+        <span className="text-[10px] ml-2 text-muted">+8</span>
+      </div>
+    ],
+    strategist: "Gamma Research",
+    strategistHasArrow: true,
+    status: "live",
+    depositIcon: (
+      <div className="relative">
+        <img src="/images/aUSD.svg" alt="aUSD" className="w-8 h-8 rounded-full object-cover" />
+        {/* <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-blue-500 border-2 border-black" /> */}
+        {/* <div className="absolute -bottom-1 -left-1 w-4 h-4 rounded-full bg-purple-500 border-2 border-black" /> */}
+      </div>
+    ),
+    strategistIcon: <div className="w-5 h-5 rounded-full bg-[#3b82f6] flex items-center justify-center text-white text-[10px] font-bold">Γ</div>,
+  },
+  {
+    id: "high-growth-eth",
+    name: "High Growth ETH",
+    category: "DeFi Yield",
     depositToken: "rsETH",
-    depositSubLabel: "Monad",
-    tvl: "1.93K rsETH",
-    tvlUsd: "$5.94M",
-    apy: "3.04%",
+    depositSubLabel: "Ethereum",
+    tvl: "15.29K rsETH",
+    tvlUsd: "$34,639,068",
+    cap: "—",
+    apy: "2.99%",
     apyTone: "positive",
-    rewardTags: ["APR", "EIGEN"],
-    composability: ["NOLOS"],
-    strategist: "Apriori",
-    status: "coming-soon",
-  },
-  {
-    id: "magma-usdc",
-    name: "USDC Lending Strategy",
-    category: "Lending",
-    depositToken: "USDC",
-    depositSubLabel: "Monad",
-    tvl: "612K USDC",
-    tvlUsd: "$612,041",
-    apy: "8.74%",
-    apyTone: "positive",
-    rewardTags: ["MGM"],
-    composability: ["NOLOS", "KIN"],
-    strategist: "Magma",
-    status: "coming-soon",
+    rewardTags: [
+      <div key="5x" className="flex items-center gap-1 bg-[#004225] text-[#00ff88] rounded-full px-2 py-0.5 text-[10px] font-bold">
+        <div className="w-2 h-2 rounded-full border-2 border-[#00ff88]" />
+        5X
+      </div>,
+      <div key="orange" className="w-5 h-5 rounded-full bg-[#c2410c] flex items-center justify-center text-[10px]">♦</div>
+    ],
+    composability: [],
+    strategist: "Edge UltraYield",
+    strategistHasArrow: true,
+    status: "live",
+    depositIcon: (
+      <div className="relative">
+        <img src="/images/rsETH.svg" alt="rsETH" className="w-8 h-8 rounded-full object-cover" />
+        {/* <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-black border-2 border-gray-800 flex items-center justify-center text-[8px] text-white">eth</div> */}
+      </div>
+    ),
+    strategistIcon: <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center text-black text-[10px] font-bold">E</div>,
   },
 ];
 
 const TABS = [
-  { key: "all", label: "All vaults" },
-  { key: "lending", label: "Lending" },
-  { key: "defi", label: "DeFi Yield" },
-  { key: "ls", label: "Liquid Staking" },
-  { key: "new", label: "Recently launched", badge: "New" },
+  { key: "all", label: "Yield Vaults" },
 ] as const;
 
 export function VaultOverview() {
@@ -139,7 +201,7 @@ export function VaultOverview() {
     const apy = tvlNum > 0 ? (yieldNum / tvlNum) * 100 * 12 : 0; // crude annualization
     return {
       id: "nolos-l2lp",
-      name: "Nolos Loss-to-LP",
+      name: "Null Loss-to-LP",
       category: "Loss-to-LP",
       depositToken: "USDC",
       depositSubLabel: "Monad Testnet",
@@ -340,12 +402,16 @@ function Row({ row, onDeposit }: { row: VaultRow; onDeposit?: () => void }) {
       {/* Deposit token */}
       <Cell label="Deposit">
         <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-soft text-[10px] font-semibold text-accent">
-            {row.depositToken.slice(0, 3)}
-          </span>
+          {row.depositIcon ? (
+            row.depositIcon
+          ) : (
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-soft text-[10px] font-semibold text-accent">
+              {row.depositToken.slice(0, 3)}
+            </span>
+          )}
           <div className="leading-tight">
             <p className="font-mono text-foreground">{row.depositToken}</p>
-            <p className="text-[11px] text-muted">{row.depositSubLabel}</p>
+            <p className="text-[11px] text-muted whitespace-pre">{row.depositSubLabel}</p>
           </div>
         </div>
       </Cell>
@@ -363,26 +429,33 @@ function Row({ row, onDeposit }: { row: VaultRow; onDeposit?: () => void }) {
 
       {/* APY */}
       <Cell label="Total APY">
-        <p
+        <div
           className={`font-mono ${
             row.apyTone === "positive" ? "text-positive" : "text-muted"
           }`}
         >
           {row.apy}
+        </div>
+        <p className="text-[11px] text-muted flex items-center gap-1">
+          (30D)
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3 opacity-60"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
         </p>
-        <p className="text-[11px] text-muted">(30D)</p>
       </Cell>
 
       {/* Rewards */}
       <Cell label="+ Rewards">
         <div className="flex flex-wrap gap-1">
-          {row.rewardTags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full border border-line bg-panel px-2 py-0.5 text-[10px] font-mono text-foreground"
-            >
-              {tag}
-            </span>
+          {row.rewardTags.map((tag, i) => (
+            typeof tag === 'string' ? (
+              <span
+                key={tag}
+                className="rounded-full border border-line bg-panel px-2 py-0.5 text-[10px] font-mono text-foreground"
+              >
+                {tag}
+              </span>
+            ) : (
+              <div key={i}>{tag}</div>
+            )
           ))}
         </div>
       </Cell>
@@ -391,13 +464,17 @@ function Row({ row, onDeposit }: { row: VaultRow; onDeposit?: () => void }) {
       <Cell label="Composability">
         <div className="flex flex-wrap gap-1">
           {row.composability.length > 0 ? (
-            row.composability.map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border border-line bg-panel px-2 py-0.5 text-[10px] font-mono text-muted"
-              >
-                {tag}
-              </span>
+            row.composability.map((tag, i) => (
+              typeof tag === 'string' ? (
+                <span
+                  key={tag}
+                  className="rounded-full border border-line bg-panel px-2 py-0.5 text-[10px] font-mono text-muted"
+                >
+                  {tag}
+                </span>
+              ) : (
+                <div key={i}>{tag}</div>
+              )
             ))
           ) : (
             <span className="text-muted">—</span>
@@ -407,7 +484,13 @@ function Row({ row, onDeposit }: { row: VaultRow; onDeposit?: () => void }) {
 
       {/* Strategist */}
       <Cell label="Strategist">
-        <span className="font-medium text-foreground">{row.strategist}</span>
+        <div className="flex items-center gap-2 text-foreground hover:text-accent cursor-pointer transition-colors w-fit">
+          {row.strategistIcon}
+          <span className="font-medium">{row.strategist}</span>
+          {row.strategistHasArrow && (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3 ml-1"><path d="M7 17l9.2-9.2M17 16.8V7H7.2"/></svg>
+          )}
+        </div>
       </Cell>
 
       {/* Action */}

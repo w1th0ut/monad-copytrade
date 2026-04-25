@@ -18,7 +18,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Nolos Trade",
+  title: "Null Loss Trade",
   description: "Loss-to-LP perpetual futures interface for Monad.",
 };
 
