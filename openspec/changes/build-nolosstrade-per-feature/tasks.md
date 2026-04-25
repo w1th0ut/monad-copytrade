@@ -11,8 +11,8 @@ Commit message format: `feat(<scope>): <short summary>` where scope ∈ {`repo`,
 - [x] 1.3 Init `sc/` via `forge init`; pin `solc_version` in `foundry.toml`; install `openzeppelin-contracts`
 - [x] 1.4 Init `be/` with `package.json`, `tsconfig.json`, minimal `src/server.ts`, and `.env.example`
 - [x] 1.5 Init `fe/` with baseline layout/page/globals.css, `package.json`, and `.env.example`
-- [ ] 1.6 Copy `reference/sc/src/MockUSDC.sol` and test; ensure `forge build && forge test`
-- [ ] 1.7 Commit: `feat(repo): initialize workspaces with baseline scaffolds and MockUSDC`
+- [x] 1.6 Copy `reference/sc/src/MockUSDC.sol` and test; ensure `forge build && forge test`
+- [x] 1.7 Commit: `feat(repo): initialize workspaces with baseline scaffolds and MockUSDC`
 
 ## 2. FE Web3 Plumbing & App Shell (commit 2)
 
