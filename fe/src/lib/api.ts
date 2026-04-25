@@ -36,9 +36,33 @@ export type UserVaultResponse = {
   shareOfVaultBps: number;
 };
 
+export type ActiveTradeResponse = {
+  id: number;
+  follower: string;
+  leader: string;
+  pair: string;
+  entryPrice: number;
+  stopLossPrice: number;
+  size: number;
+  margin: number;
+  side: "long" | "short";
+  status: "open" | "closed";
+};
+
+export type VaultActivityResponse = {
+  id: number;
+  event: "loss_vaulted" | "yield_claimed" | "fee_split";
+  address: string;
+  amount: number;
+  receipt: string;
+  timestamp: string;
+};
+
 export const api = {
   getStats: () => fetchApi<StatsResponse>("/api/v1/stats"),
   getLeaders: () => fetchApi<LeaderResponse[]>("/api/v1/leaders"),
+  getActiveTrades: () => fetchApi<ActiveTradeResponse[]>("/api/v1/trades/active"),
+  getVaultActivity: () => fetchApi<VaultActivityResponse[]>("/api/v1/vault/activity"),
   getUserVault: (address: string) =>
     fetchApi<UserVaultResponse>(`/api/v1/user/${address}/vault`),
 };
