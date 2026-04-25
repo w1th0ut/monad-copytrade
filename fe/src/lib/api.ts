@@ -1,4 +1,8 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/$/, "");
+
+if (!API_BASE) {
+  throw new Error("NEXT_PUBLIC_BACKEND_URL is required");
+}
 
 async function fetchApi<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`);
