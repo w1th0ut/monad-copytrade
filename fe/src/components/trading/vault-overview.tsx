@@ -152,6 +152,13 @@ const TABS = [
   { key: "all", label: "Yield Vaults" },
 ] as const;
 
+function fmtUsd(n: number) {
+  return `$${n.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
 export function VaultOverview() {
   const { address } = useAccount();
   const { isConnected, isOnMonad, contractsReady } = useProtocolReadiness();
@@ -304,6 +311,36 @@ export function VaultOverview() {
         <FilterChip label="Composability" />
       </div>
 
+      <section className="mt-4 border border-line bg-canvas">
+        <div className="border-b border-line px-4 py-4">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.22em] text-foreground">
+            Vault economics
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            Core vault metrics and keeper mode.
+          </p>
+        </div>
+        <div className="grid gap-px bg-line md:grid-cols-2 xl:grid-cols-5">
+          <EconomyStat label="Vault TVL" value={stats ? fmtUsd(stats.totalTvl) : "—"} />
+          <EconomyStat
+            label="Total volume"
+            value={stats ? fmtUsd(stats.totalVolume) : "—"}
+          />
+          <EconomyStat
+            label="Yield distributed"
+            value={stats ? fmtUsd(stats.totalYieldDistributed) : "—"}
+          />
+          <EconomyStat
+            label="Total followers"
+            value={stats ? String(stats.totalFollowers) : "—"}
+          />
+          <EconomyStat
+            label="Keeper mode"
+            value={stats?.keeperMode ?? "In-memory Express"}
+          />
+        </div>
+      </section>
+
       {/* Table */}
       <section className="mt-4 overflow-hidden border border-line bg-canvas">
         <div className="hidden grid-cols-[2fr_1.4fr_1.2fr_0.8fr_1fr_1.2fr_1.2fr_1.4fr_140px] gap-3 border-b border-line px-4 py-3 text-[11px] uppercase tracking-[0.18em] text-muted lg:grid">
@@ -387,6 +424,15 @@ export function VaultOverview() {
 
       <DepositModal open={depositOpen} onClose={() => setDepositOpen(false)} />
     </main>
+  );
+}
+
+function EconomyStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-canvas px-4 py-4">
+      <p className="text-xs uppercase tracking-[0.16em] text-muted">{label}</p>
+      <p className="mt-2 font-mono text-base text-foreground">{value}</p>
+    </div>
   );
 }
 

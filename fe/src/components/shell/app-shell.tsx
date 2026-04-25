@@ -4,7 +4,6 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { WalletActionButton } from "@/components/wallet/wallet-action-button";
-import { WalletStatusChip } from "@/components/wallet/wallet-status-chip";
 import { marketSnapshot } from "@/lib/mock-data";
 import { api } from "@/lib/api";
 
@@ -82,26 +81,7 @@ export function AppShell({
             </nav>
           </div>
           <div className="flex items-center gap-3">
-            <div className="hidden items-center gap-2 rounded-full border border-line bg-panel px-3 py-2 text-xs text-muted lg:flex">
-              <span className="status-orb h-2 w-2 rounded-full bg-positive" />
-              Auto vaulting enabled
-            </div>
-            <div className="hidden rounded-full border border-line bg-panel px-3 py-2 font-mono text-xs text-foreground sm:block">
-              {marketSnapshot.venue}
-            </div>
-            <WalletStatusChip />
             <WalletActionButton className="bg-foreground text-background hover:opacity-90" />
-          </div>
-        </div>
-        <div className="border-t border-line bg-panel/70">
-          <div className="ticker-flash mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4 px-4 py-3 text-sm sm:px-6">
-            <p className="text-muted">
-              Losses routed into the protocol vault are minted back as perpetual{" "}
-              <span className="font-medium text-foreground">vUSD receipts</span>.
-            </p>
-            <span className="hidden rounded-full border border-line px-3 py-1 font-mono text-xs text-positive lg:block">
-              1 wallet approval, no per-trade signatures
-            </span>
           </div>
         </div>
         <div className="border-t border-line bg-background/70">

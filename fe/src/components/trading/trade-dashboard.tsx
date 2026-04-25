@@ -8,10 +8,9 @@ import { TradingViewChart } from "@/components/trading/trading-view-chart";
 import { TradeTicketStatus } from "@/components/wallet/trade-ticket-status";
 import {
   useIdleBalance,
-  useFollowLeader,
   useOpenPosition,
 } from "@/hooks/use-monad-contract";
-import { api, type LeaderResponse } from "@/lib/api";
+import { api } from "@/lib/api";
 
 const timeframes = ["1m", "5m", "15m", "1h", "4h", "1d"];
 const USDC_DECIMALS = 6;
@@ -27,9 +26,7 @@ const PAIR_IDS: Record<string, `0x${string}`> = {
 
 const PAIRS = Object.keys(PAIR_IDS);
 
-type TabType = "market" | "limit" | "advanced";
 type SideType = "long" | "short";
-type ModeType = "copy" | "manual";
 
 function getEthPrice(prices?: Record<string, { price: number; updatedAt: number }>): number {
   if (!prices) return 0;
@@ -75,12 +72,6 @@ export function TradeDashboard() {
     refetchInterval: 30_000,
   });
 
-  const { data: vaultActivity } = useQuery({
-    queryKey: ["vaultActivity"],
-    queryFn: api.getVaultActivity,
-    refetchInterval: 20_000,
-  });
-
   const ethPrice = getEthPrice(stats?.prices);
 
   return (
@@ -120,16 +111,11 @@ export function TradeDashboard() {
                 <span className="font-mono text-3xl text-foreground">
                   {ethPrice > 0 ? fmtPrice(ethPrice) : "—"}
                 </span>
-                {stats && (
-                  <span className="font-mono text-sm text-positive">
-                    Monad Testnet
-                  </span>
-                )}
               </div>
             </div>
             <TradingViewChart symbol="BINANCE:ETHUSDT" />
           </div>
-          <div className="grid gap-px bg-line lg:grid-cols-[1.25fr_1fr_1fr]">
+          <div className="grid gap-px bg-line lg:grid-cols-[1.5fr_1fr]">
             {/* Open positions */}
             <section className="bg-canvas">
               <PanelHeader
@@ -259,135 +245,14 @@ export function TradeDashboard() {
               </div>
             </section>
 
-            {/* Vault flow */}
-            <section className="bg-canvas">
-              <PanelHeader
-                title="Vault flow"
-                detail="Losses convert into receipt-backed LP ownership."
-              />
-              <div className="divide-y divide-line">
-                {vaultActivity && vaultActivity.length > 0 ? (
-                  vaultActivity.slice(0, 3).map((item) => (
-                    <div key={item.id} className="px-4 py-4">
-                      <div className="flex items-center justify-between gap-4">
-                        <p className="font-medium text-foreground capitalize">
-                          {item.event.replace(/_/g, " ")}
-                        </p>
-                        <span className="font-mono text-sm text-foreground">
-                          {fmtUsd(item.amount)}
-                        </span>
-                      </div>
-                      <div className="mt-2 flex items-center justify-between gap-4 text-xs text-muted">
-                        <span>
-                          {item.address.slice(0, 6)}…{item.address.slice(-4)}
-                        </span>
-                        <span>{item.receipt}</span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="px-4 py-6 text-center text-sm text-muted">
-                    No vault activity
-                  </p>
-                )}
-              </div>
-            </section>
           </div>
         </div>
         <aside className="bg-panel">
-          <TradeTicket leaders={leaders ?? []} ethPrice={ethPrice} />
+          <TradeTicket ethPrice={ethPrice} />
         </aside>
-      </section>
-
-      <section className="fade-up mt-6 grid gap-px border border-line bg-line lg:grid-cols-[1.25fr_1fr]">
-        {/* Execution feed */}
-        <div className="bg-canvas">
-          <PanelHeader
-            title="Execution feed"
-            detail="Recent vault and keeper events from the indexer."
-          />
-          <div className="divide-y divide-line">
-            {vaultActivity && vaultActivity.length > 0 ? (
-              vaultActivity.map((entry) => (
-                <div
-                  key={entry.id}
-                  className="flex items-start gap-3 px-4 py-4"
-                >
-                  <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-accent" />
-                  <p className="text-sm leading-6 text-foreground">
-                    {eventToFeedLine(entry)}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p className="px-4 py-6 text-center text-sm text-muted">
-                No activity yet
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Vault economics */}
-        <div className="bg-canvas">
-          <PanelHeader
-            title="Vault economics"
-            detail="Trading fees route into the vault before they are claimable."
-          />
-          <div className="space-y-4 px-4 py-4">
-            <MetricRow
-              label="Vault TVL"
-              value={stats ? fmtUsd(stats.totalTvl) : "—"}
-            />
-            <MetricRow
-              label="Total volume"
-              value={stats ? fmtUsd(stats.totalVolume) : "—"}
-            />
-            <MetricRow
-              label="Yield distributed"
-              value={stats ? fmtUsd(stats.totalYieldDistributed) : "—"}
-            />
-            <MetricRow
-              label="Total followers"
-              value={stats ? String(stats.totalFollowers) : "—"}
-            />
-            <MetricRow
-              label="Keeper mode"
-              value={stats?.keeperMode ?? "In-memory Express"}
-            />
-            <div className="rounded-3xl border border-line bg-panel px-4 py-4">
-              <p className="text-sm font-medium text-foreground">
-                Receipt token lifecycle
-              </p>
-              <p className="mt-2 text-sm leading-6 text-muted">
-                When a stop loss is executed, the realized loss is locked in the
-                vault and the user receives vUSD receipts that keep claiming
-                future fee yield.
-              </p>
-            </div>
-          </div>
-        </div>
       </section>
     </main>
   );
-}
-
-function eventToFeedLine(entry: {
-  event: string;
-  address: string;
-  amount: number;
-  receipt: string;
-}) {
-  const addr = `${entry.address.slice(0, 6)}…${entry.address.slice(-4)}`;
-  switch (entry.event) {
-    case "loss_vaulted":
-      return `${addr} stop loss executed — ${fmtUsd(entry.amount)} vaulted, ${entry.receipt} minted.`;
-    case "yield_claimed":
-      return `${addr} claimed ${fmtUsd(entry.amount)} USDC yield.`;
-    case "fee_split":
-      return `Protocol fee ${fmtUsd(entry.amount)} split: ${entry.receipt}.`;
-    default:
-      return `${entry.event.replace(/_/g, " ")} — ${addr}: ${fmtUsd(entry.amount)}`;
-  }
 }
 
 function PanelHeader({ title, detail }: { title: string; detail: string }) {
@@ -403,45 +268,22 @@ function PanelHeader({ title, detail }: { title: string; detail: string }) {
   );
 }
 
-function MetricRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-4 border-b border-line/70 pb-4 text-sm">
-      <span className="text-muted">{label}</span>
-      <span className="font-mono text-foreground">{value}</span>
-    </div>
-  );
-}
-
-function TradeTicket({
-  leaders,
-  ethPrice,
-}: {
-  leaders: LeaderResponse[];
-  ethPrice: number;
-}) {
+function TradeTicket({ ethPrice }: { ethPrice: number }) {
   const { address } = useAccount();
   const { data: idle } = useIdleBalance();
-  const { followLeader, isPending: followPending } = useFollowLeader();
   const { openPosition, isPending: openPending } = useOpenPosition();
 
-  const [tab, setTab] = useState<TabType>("market");
   const [side, setSide] = useState<SideType>("long");
-  const [mode, setMode] = useState<ModeType>("copy");
-  const [leaderAddress, setLeaderAddress] = useState<string>(
-    leaders[0]?.address ?? "",
-  );
   const [pair, setPair] = useState<string>("ETH/USDC");
   const [margin, setMargin] = useState<number>(250);
   const [leverage, setLeverage] = useState<number>(12);
   const [stopLossPct, setStopLossPct] = useState<number>(50);
-  const [limitPrice, setLimitPrice] = useState<number>(ethPrice || 3000);
 
   const idleFormatted = idle
     ? Number(formatUnits(idle as bigint, USDC_DECIMALS)).toFixed(2)
     : "0.00";
 
-  const entryPrice =
-    tab === "market" ? ethPrice : limitPrice;
+  const entryPrice = ethPrice;
 
   const preview = useMemo(() => {
     const notional = margin * leverage;
@@ -451,60 +293,36 @@ function TradeTicket({
     return { notional, fee, lossToVault, vUsdMinted };
   }, [margin, leverage, stopLossPct]);
 
-  const isPending = followPending || openPending;
+  const isPending = openPending;
 
   function handleSubmit() {
     if (!address) return;
-
-    if (mode === "copy") {
-      const leader = (leaderAddress || leaders[0]?.address) as `0x${string}`;
-      if (!leader) return;
-      const stopLossBps = Math.round(stopLossPct * 100);
-      followLeader(leader, margin, leverage, stopLossBps);
-    } else {
-      const leader = (leaderAddress || leaders[0]?.address) as `0x${string}`;
-      const pairId = PAIR_IDS[pair] ?? PAIR_IDS["ETH/USDC"];
-      const stopLossOffset = entryPrice * (stopLossPct / 100);
-      const stopLossPrice =
-        side === "long"
-          ? entryPrice - stopLossOffset
-          : entryPrice + stopLossOffset;
-      openPosition({
-        leader: leader ?? ("0x0000000000000000000000000000000000000000" as `0x${string}`),
-        pairId,
-        isLong: side === "long",
-        marginUsdc: margin,
-        leverage,
-        entryPrice,
-        stopLossPrice,
-      });
-    }
+    const pairId = PAIR_IDS[pair] ?? PAIR_IDS["ETH/USDC"];
+    const stopLossOffset = entryPrice * (stopLossPct / 100);
+    const stopLossPrice =
+      side === "long"
+        ? entryPrice - stopLossOffset
+        : entryPrice + stopLossOffset;
+    openPosition({
+      leader: address,
+      pairId,
+      isLong: side === "long",
+      marginUsdc: margin,
+      leverage,
+      entryPrice,
+      stopLossPrice,
+    });
   }
 
   const submitLabel = isPending
     ? "Confirming…"
-    : mode === "copy"
-      ? `Follow leader ${side === "long" ? "long" : "short"}`
-      : `Open ${side === "long" ? "long" : "short"}`;
+    : `Open ${side === "long" ? "long" : "short"}`;
 
   return (
     <div className="flex h-full flex-col">
-      {/* Tab bar */}
       <div className="border-b border-line px-4 py-4">
-        <div className="grid grid-cols-3 gap-2 text-sm">
-          {(["market", "limit", "advanced"] as TabType[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`rounded-full px-3 py-2 font-medium capitalize ${
-                tab === t
-                  ? "bg-foreground text-background"
-                  : "border border-line text-muted hover:text-foreground"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
+        <div className="rounded-full border border-line bg-canvas px-4 py-2 text-center text-sm font-medium text-foreground">
+          Market only
         </div>
       </div>
 
@@ -539,72 +357,19 @@ function TradeTicket({
         <Field label="Available balance" value={`$${idleFormatted} USDC`} />
 
         <label className="block">
-          <span className="mb-2 block text-muted">Execution mode</span>
+          <span className="mb-2 block text-muted">Pair</span>
           <select
-            value={mode}
-            onChange={(e) => setMode(e.target.value as ModeType)}
+            value={pair}
+            onChange={(e) => setPair(e.target.value)}
             className="w-full rounded-2xl border border-line bg-canvas px-4 py-3 text-foreground outline-none focus:border-accent"
           >
-            <option value="copy">Copy leader</option>
-            <option value="manual">Manual trade</option>
+            {PAIRS.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
           </select>
         </label>
-
-        {mode === "manual" && (
-          <label className="block">
-            <span className="mb-2 block text-muted">Pair</span>
-            <select
-              value={pair}
-              onChange={(e) => setPair(e.target.value)}
-              className="w-full rounded-2xl border border-line bg-canvas px-4 py-3 text-foreground outline-none focus:border-accent"
-            >
-              {PAIRS.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-
-        <label className="block">
-          <span className="mb-2 block text-muted">
-            {mode === "copy" ? "Leader to follow" : "Leader (for attribution)"}
-          </span>
-          <select
-            value={leaderAddress}
-            onChange={(e) => setLeaderAddress(e.target.value)}
-            className="w-full rounded-2xl border border-line bg-canvas px-4 py-3 text-foreground outline-none focus:border-accent"
-          >
-            {leaders.length > 0 ? (
-              leaders.map((l) => (
-                <option key={l.address} value={l.address}>
-                  {l.username} — {l.style}
-                </option>
-              ))
-            ) : (
-              <option value="">No leaders registered</option>
-            )}
-          </select>
-        </label>
-
-        {(tab === "limit" || tab === "advanced") && (
-          <label className="block">
-            <div className="mb-2 flex items-center justify-between gap-4">
-              <span className="text-muted">Limit price (USD)</span>
-              <span className="font-mono text-foreground">
-                {fmtPrice(limitPrice)}
-              </span>
-            </div>
-            <input
-              type="number"
-              min="1"
-              value={limitPrice}
-              onChange={(e) => setLimitPrice(Number(e.target.value))}
-              className="w-full rounded-2xl border border-line bg-canvas px-4 py-3 text-foreground outline-none focus:border-accent"
-            />
-          </label>
-        )}
 
         <label className="block">
           <span className="mb-2 block text-muted">Margin allocation (USDC)</span>
@@ -649,18 +414,6 @@ function TradeTicket({
           />
         </label>
 
-        {tab === "advanced" && (
-          <div className="rounded-2xl border border-line bg-canvas px-4 py-3">
-            <p className="mb-2 text-xs uppercase tracking-widest text-muted">
-              Advanced
-            </p>
-            <div className="space-y-2 text-xs text-muted">
-              <p>Stop loss triggers at {fmtPct(-stopLossPct)} — vaults loss and mints vUSD.</p>
-              <p>Position is keeper-settled, no manual close required.</p>
-            </div>
-          </div>
-        )}
-
         {/* Execution preview */}
         <div className="rounded-3xl border border-line bg-canvas px-4 py-4">
           <p className="text-sm font-medium text-foreground">
@@ -673,7 +426,7 @@ function TradeTicket({
             />
             <Field label="Entry fee (0.1%)" value={fmtUsd(preview.fee)} />
             <Field
-              label={`Entry price ${tab === "market" ? "(market)" : "(limit)"}`}
+              label="Entry price (market)"
               value={entryPrice > 0 ? fmtPrice(entryPrice) : "—"}
             />
             <Field
@@ -694,7 +447,7 @@ function TradeTicket({
       <div className="mt-auto border-t border-line px-4 py-4">
         <button
           onClick={handleSubmit}
-          disabled={isPending || !address || leaders.length === 0}
+          disabled={isPending || !address}
           className={`w-full rounded-full px-4 py-3 font-semibold transition-opacity ${
             side === "long"
               ? "bg-positive text-background"
