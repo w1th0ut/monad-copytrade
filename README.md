@@ -80,6 +80,18 @@ Each workspace is independent — install and run per workspace.
 
 ---
 
+## 📍 Deployed contracts (Monad testnet)
+
+| Contract              | Address                                      |
+| --------------------- | -------------------------------------------- |
+| `MockUSDC`            | `0xF515Fd4fAf79E263d6E38c77A6be7165d3F746Df` |
+| `vUSD`                | `0x2f994B6Ffbe5f943cb1F1932b1CF41d81780A091` |
+| `Vault`               | `0xE47b99032f7a7Efef1917A7CAA81455A3C552d17` |
+| `TradingEngine`       | `0xB9E1a566FF4F60D5d760F2316D092896856116d4` |
+| `CopyTradeRegistry`   | `0x8c93ebAB6ef9eAA2a181Cb179f26BF27CC2652E8` |
+
+---
+
 ## ⚙️ Backend services (`be/`)
 
 Single Node process exposing three responsibilities, each isolated under
