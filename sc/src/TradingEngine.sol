@@ -8,6 +8,13 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Vault} from "./Vault.sol";
 
+interface ICopyTradeRegistry {
+    function subscriptions(address follower, address leader)
+        external
+        view
+        returns (bool active, uint256 margin, uint256 leverage, uint256 stopLossBps);
+}
+
 contract TradingEngine is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -17,6 +24,8 @@ contract TradingEngine is Ownable, ReentrancyGuard {
     error InvalidExitPrice();
     error UnauthorizedKeeper();
     error InsufficientIdleBalance();
+    error CopyTradeRegistryNotSet();
+    error SubscriptionInactive();
 
     struct Position {
         address trader;
@@ -36,6 +45,7 @@ contract TradingEngine is Ownable, ReentrancyGuard {
 
     address public keeper;
     address public treasury;
+    address public copyTradeRegistry;
 
     uint256 public nextPositionId = 1;
     uint16 public tradingFeeBps = 10;
@@ -55,6 +65,7 @@ contract TradingEngine is Ownable, ReentrancyGuard {
     event PositionClosed(uint256 indexed positionId, int256 pnl, uint256 fee, uint256 exitPrice);
     event StopLossExecuted(uint256 indexed positionId, uint256 exitPrice, uint256 lossMovedToVault);
     event KeeperUpdated(address indexed keeper);
+    event CopyTradeRegistryUpdated(address indexed copyTradeRegistry);
 
     constructor(
         address usdc_,
@@ -74,6 +85,11 @@ contract TradingEngine is Ownable, ReentrancyGuard {
     function setKeeper(address keeper_) external onlyOwner {
         keeper = keeper_;
         emit KeeperUpdated(keeper_);
+    }
+
+    function setCopyTradeRegistry(address copyTradeRegistry_) external onlyOwner {
+        copyTradeRegistry = copyTradeRegistry_;
+        emit CopyTradeRegistryUpdated(copyTradeRegistry_);
     }
 
     function deposit(uint256 amount) external nonReentrant {
@@ -110,33 +126,35 @@ contract TradingEngine is Ownable, ReentrancyGuard {
         uint256 entryPrice,
         uint256 stopLossPrice
     ) external nonReentrant returns (uint256 positionId) {
-        if (margin == 0 || entryPrice == 0 || stopLossPrice == 0) {
-            revert InvalidAmount();
+        positionId = _openPositionFor(
+            msg.sender, leader, pairId, isLong, margin, leverage, entryPrice, stopLossPrice
+        );
+    }
+
+    function mirrorTradeFor(
+        address follower,
+        address leader,
+        bytes32 pairId,
+        bool isLong,
+        uint256 entryPrice
+    ) external nonReentrant returns (uint256 positionId) {
+        if (msg.sender != keeper) {
+            revert UnauthorizedKeeper();
         }
-        if (leverage < 1 || leverage > 25) {
-            revert InvalidLeverage();
-        }
-        if (idleBalance[msg.sender] < margin) {
-            revert InsufficientIdleBalance();
+        if (copyTradeRegistry == address(0)) {
+            revert CopyTradeRegistryNotSet();
         }
 
-        idleBalance[msg.sender] -= margin;
+        (bool active, uint256 margin, uint256 leverage, uint256 stopLossBps) =
+            ICopyTradeRegistry(copyTradeRegistry).subscriptions(follower, leader);
+        if (!active) {
+            revert SubscriptionInactive();
+        }
 
-        positionId = nextPositionId++;
-        positions[positionId] = Position({
-            trader: msg.sender,
-            leader: leader,
-            pairId: pairId,
-            isLong: isLong,
-            isOpen: true,
-            margin: margin,
-            leverage: leverage,
-            size: margin * leverage,
-            entryPrice: entryPrice,
-            stopLossPrice: stopLossPrice
-        });
-
-        emit PositionOpened(positionId, msg.sender, leader, margin, leverage);
+        uint256 stopLossPrice = _deriveStopLossPrice(entryPrice, isLong, leverage, stopLossBps);
+        positionId = _openPositionFor(
+            follower, leader, pairId, isLong, margin, leverage, entryPrice, stopLossPrice
+        );
     }
 
     function closePosition(uint256 positionId, uint256 exitPrice) external nonReentrant {
@@ -211,6 +229,70 @@ contract TradingEngine is Ownable, ReentrancyGuard {
         if (stopLossMode) {
             emit StopLossExecuted(positionId, exitPrice, lossMovedToVault);
         }
+    }
+
+    function _openPositionFor(
+        address trader,
+        address leader,
+        bytes32 pairId,
+        bool isLong,
+        uint256 margin,
+        uint256 leverage,
+        uint256 entryPrice,
+        uint256 stopLossPrice
+    ) internal returns (uint256 positionId) {
+        if (margin == 0 || entryPrice == 0 || stopLossPrice == 0) {
+            revert InvalidAmount();
+        }
+        if (leverage < 1 || leverage > 25) {
+            revert InvalidLeverage();
+        }
+        if (idleBalance[trader] < margin) {
+            revert InsufficientIdleBalance();
+        }
+
+        idleBalance[trader] -= margin;
+
+        positionId = nextPositionId++;
+        positions[positionId] = Position({
+            trader: trader,
+            leader: leader,
+            pairId: pairId,
+            isLong: isLong,
+            isOpen: true,
+            margin: margin,
+            leverage: leverage,
+            size: margin * leverage,
+            entryPrice: entryPrice,
+            stopLossPrice: stopLossPrice
+        });
+
+        emit PositionOpened(positionId, trader, leader, margin, leverage);
+    }
+
+    function _deriveStopLossPrice(
+        uint256 entryPrice,
+        bool isLong,
+        uint256 leverage,
+        uint256 stopLossBps
+    ) internal pure returns (uint256) {
+        if (entryPrice == 0 || leverage == 0 || stopLossBps == 0 || stopLossBps > 10_000) {
+            revert InvalidAmount();
+        }
+
+        uint256 priceMove = (entryPrice * stopLossBps) / (leverage * 10_000);
+        if (priceMove == 0) {
+            revert InvalidAmount();
+        }
+
+        if (isLong) {
+            if (priceMove >= entryPrice) {
+                revert InvalidExitPrice();
+            }
+            return entryPrice - priceMove;
+        }
+
+        return entryPrice + priceMove;
     }
 
     function _distributeFee(uint256 fee, address leader) internal {

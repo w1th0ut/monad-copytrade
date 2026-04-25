@@ -45,6 +45,7 @@ contract DeployProtocol is Script {
         receiptToken.transferOwnership(address(vault));
         vault.setTradingEngine(address(tradingEngine));
         vault.setTreasury(treasury);
+        tradingEngine.setCopyTradeRegistry(address(registry));
 
         vm.stopBroadcast();
 

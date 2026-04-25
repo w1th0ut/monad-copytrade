@@ -9,7 +9,7 @@ const app = createApi(keeper);
 const server = createServer(app);
 
 keeper.start();
-startEventIndexer(15_000);
+startEventIndexer(3_000);
 
 server.listen(env.PORT, () => {
   console.log(`nolosstrade backend listening on http://localhost:${env.PORT}`);

@@ -27,6 +27,7 @@ export type ActiveTrade = {
   id: number;
   follower: string;
   leader: string;
+  pairId?: `0x${string}`;
   pair: string;
   entryPrice: number;
   stopLossPrice: number;
