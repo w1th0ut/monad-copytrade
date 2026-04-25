@@ -5,7 +5,9 @@ if (!API_BASE) {
 }
 
 async function fetchApi<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`);
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: { "ngrok-skip-browser-warning": "true" },
+  });
   if (!res.ok) throw new Error(`API ${path}: ${res.status}`);
   const json = await res.json();
   return json.data as T;
