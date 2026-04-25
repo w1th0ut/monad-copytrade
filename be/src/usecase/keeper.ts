@@ -1,31 +1,38 @@
 import { env } from "../config/env.js";
-import {
-  activeTrades,
-  priceCache,
-  stats,
-  users,
-  vaultActivity,
-} from "../repository/memory.js";
+import { priceCache, activeTrades } from "../repository/memory.js";
+
+/**
+ * KeeperService — fetches live prices and exposes status.
+ *
+ * Position settlement (stop-loss execution) happens on-chain via the
+ * keeper wallet. This service only maintains a price cache for the
+ * dashboard UI to display mark prices.
+ */
+
+const PYTH_PRICE_FEED_IDS: Record<string, string> = {
+  "ETH/USD": "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
+  "BTC/USD": "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43",
+  "SOL/USD": "0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d",
+};
+
+const PYTH_ENDPOINT = env.PYTH_ENDPOINT;
 
 export class KeeperService {
   private intervalId?: NodeJS.Timeout;
-  private nextVaultActivityId = vaultActivity.length + 1;
 
   start() {
-    if (this.intervalId) {
-      return;
-    }
+    if (this.intervalId) return;
+
+    // Fetch prices immediately on startup
+    void this.fetchPrices();
 
     this.intervalId = setInterval(() => {
-      this.tick();
+      void this.fetchPrices();
     }, env.KEEPER_POLL_INTERVAL_MS);
   }
 
   stop() {
-    if (!this.intervalId) {
-      return;
-    }
-
+    if (!this.intervalId) return;
     clearInterval(this.intervalId);
     this.intervalId = undefined;
   }
@@ -42,64 +49,52 @@ export class KeeperService {
       running: Boolean(this.intervalId),
       pollIntervalMs: env.KEEPER_POLL_INTERVAL_MS,
       maxPriceStaleMs: env.MAX_PRICE_STALE_MS,
-      trackedTrades: activeTrades.filter((trade) => trade.status === "open").length,
+      trackedTrades: activeTrades.filter((t) => t.status === "open").length,
       cacheStatus,
     };
   }
 
-  private tick() {
-    for (const [pair, current] of priceCache.entries()) {
-      const drift = Number(((Math.random() - 0.5) * 3.2).toFixed(2));
-      priceCache.set(pair, {
-        price: Number((current.price + drift).toFixed(2)),
-        updatedAt: Date.now(),
-      });
-    }
+  private async fetchPrices() {
+    const feedIds = Object.values(PYTH_PRICE_FEED_IDS);
+    const pairNames = Object.keys(PYTH_PRICE_FEED_IDS);
 
-    for (const trade of activeTrades) {
-      if (trade.status !== "open") {
-        continue;
+    try {
+      const url = new URL("/v2/updates/price/latest", PYTH_ENDPOINT);
+      for (const id of feedIds) {
+        url.searchParams.append("ids[]", id);
+      }
+      url.searchParams.set("parsed", "true");
+
+      const res = await fetch(url.toString());
+      if (!res.ok) {
+        console.error(`[keeper] Pyth HTTP ${res.status}`);
+        return;
       }
 
-      const latest = priceCache.get(trade.pair);
-      if (!latest) {
-        continue;
-      }
+      const json = (await res.json()) as {
+        parsed: Array<{
+          id: string;
+          price: { price: string; expo: number };
+        }>;
+      };
 
-      const stale = Date.now() - latest.updatedAt > env.MAX_PRICE_STALE_MS;
-      if (stale) {
-        continue;
-      }
+      for (const entry of json.parsed) {
+        const idx = feedIds.findIndex(
+          (fid) => fid.replace("0x", "") === entry.id.replace("0x", ""),
+        );
+        if (idx === -1) continue;
 
-      const stopTriggered =
-        trade.side === "long"
-          ? latest.price <= trade.stopLossPrice
-          : latest.price >= trade.stopLossPrice;
+        const rawPrice = Number(entry.price.price);
+        const expo = entry.price.expo;
+        const price = rawPrice * Math.pow(10, expo);
 
-      if (!stopTriggered) {
-        continue;
-      }
-
-      trade.status = "closed";
-
-      const user = users.get(trade.follower);
-      if (user) {
-        const vaultedAmount = Number((trade.margin * 0.5).toFixed(2));
-        user.vUsdBalance = Number((user.vUsdBalance + vaultedAmount).toFixed(2));
-        user.claimableYield = Number((user.claimableYield + vaultedAmount * 0.03).toFixed(2));
-
-        vaultActivity.unshift({
-          id: this.nextVaultActivityId++,
-          event: "loss_vaulted",
-          address: trade.follower,
-          amount: vaultedAmount,
-          receipt: `${vaultedAmount.toFixed(2)} vUSD`,
-          timestamp: new Date().toISOString(),
+        priceCache.set(pairNames[idx], {
+          price: Number(price.toFixed(2)),
+          updatedAt: Date.now(),
         });
       }
-
-      stats.totalTvl += Math.round(trade.margin * 0.5);
-      stats.lastSyncAt = new Date().toISOString();
+    } catch (err) {
+      console.error("[keeper] price fetch failed:", (err as Error).message);
     }
   }
 }

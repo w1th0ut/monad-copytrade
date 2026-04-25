@@ -17,6 +17,7 @@ const envSchema = z.object({
   KEEPER_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(1500),
   MAX_PRICE_STALE_MS: z.coerce.number().int().positive().default(15000),
   KEEPER_PRIVATE_KEY: z.string().optional(),
+  PYTH_ENDPOINT: z.string().url().default("https://hermes.pyth.network"),
   INTERNAL_SYNC_KEY: z.string().optional(),
   USDC_ADDRESS: addressSchema,
   VAULT_ADDRESS: addressSchema,

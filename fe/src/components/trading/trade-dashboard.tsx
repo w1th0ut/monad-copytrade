@@ -34,6 +34,7 @@ type ModeType = "copy" | "manual";
 function getEthPrice(prices?: Record<string, { price: number; updatedAt: number }>): number {
   if (!prices) return 0;
   return (
+    prices["ETH/USD"]?.price ??
     prices["ETH"]?.price ??
     prices["ETH/USDC"]?.price ??
     prices["ETHUSD"]?.price ??
@@ -59,7 +60,7 @@ export function TradeDashboard() {
   const { data: stats } = useQuery({
     queryKey: ["stats"],
     queryFn: api.getStats,
-    refetchInterval: 10_000,
+    refetchInterval: 1_000,
   });
 
   const { data: activeTrades } = useQuery({
