@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import {
   useAccount,
   useReadContract,
@@ -40,7 +40,7 @@ export function useUsdcApproval(spender: `0x${string}` | undefined) {
   const { address } = useAccount();
   const { writeContract, data: hash, isPending } = useWriteContract();
 
-  const { data: allowance } = useReadContract({
+  const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: USDC_ADDRESS,
     abi: erc20Abi,
     functionName: "allowance",
@@ -69,7 +69,14 @@ export function useUsdcApproval(spender: `0x${string}` | undefined) {
     [writeContract, spender],
   );
 
-  const { isLoading: isConfirming } = useWaitForTransactionReceipt({ hash });
+  const { isLoading: isConfirming } = useWaitForTransactionReceipt({
+    hash,
+    onReplaced: () => refetchAllowance(),
+  });
+
+  useEffect(() => {
+    if (hash && !isConfirming) refetchAllowance();
+  }, [hash, isConfirming, refetchAllowance]);
 
   return { allowance, balance, approve, isPending, isConfirming, hash };
 }
