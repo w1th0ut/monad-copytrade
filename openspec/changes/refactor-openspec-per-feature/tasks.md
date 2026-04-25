@@ -7,4 +7,4 @@
 ## 2. Validation
 
 - [x] 2.1 Verify that the file `openspec/changes/build-nolosstrade-per-feature/tasks.md` has been updated and contains the correct `- [ ]` syntax.
-- [ ] 2.2 Stage and commit the `openspec` modifications with message: `chore(openspec): refactor tasks to be feature-sliced`
+- [x] 2.2 Stage and commit the `openspec` modifications with message: `chore(openspec): refactor tasks to be feature-sliced`
