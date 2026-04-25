@@ -1,11 +1,10 @@
 import { AppShell } from "@/components/shell/app-shell";
+import { TradeDashboard } from "@/components/trading/trade-dashboard";
 
-export default function AppPage() {
+export default function TradeAppPage() {
   return (
-    <AppShell active="trade" title="Trade" description="Open a new position">
-      <div className="p-4 sm:p-6 text-center text-muted">
-        Stub Trade Dashboard
-      </div>
+    <AppShell active="trade">
+      <TradeDashboard />
     </AppShell>
   );
 }

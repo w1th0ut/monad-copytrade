@@ -35,11 +35,11 @@ Commit message format: `feat(<scope>): <short summary>` where scope ∈ {`repo`,
 
 ## 4. Trading Engine Feature Slice (commit 4)
 
-- [ ] 4.1 SC: Copy `TradingEngine.sol`, implement open/close, SL (Pyth check), fee splits, and tests
-- [ ] 4.2 BE: Add Pyth keeper (`usecase/keeper.ts`) for Stop-Loss execution
-- [ ] 4.3 FE: Add trade dashboard `/app` with chart, ticket, and account panel
-- [ ] 4.4 Verify all workspaces build
-- [ ] 4.5 Commit: `feat(trading): add TradingEngine SC, BE Pyth keeper, and FE dashboard`
+- [x] 4.1 SC: Copy `TradingEngine.sol`, implement open/close, SL (Pyth check), fee splits, and tests
+- [x] 4.2 BE: Add Pyth keeper (`usecase/keeper.ts`) for Stop-Loss execution
+- [x] 4.3 FE: Add trade dashboard `/app` with chart, ticket, and account panel
+- [x] 4.4 Verify all workspaces build
+- [x] 4.5 Commit: `feat(trading): add TradingEngine SC, BE Pyth keeper, and FE dashboard`
 
 ## 5. CopyTrade Feature Slice (commit 5)
 
