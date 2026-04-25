@@ -1,0 +1,56 @@
+1. In-Memory Data Structures
+Karena targetnya adalah MVP 7 jam, kita akan menggunakan variabel global di dalam Express.js untuk menyimpan state. Ini menjamin kecepatan akses maksimal tanpa perlu melakukan setup database eksternal.
+Users Store: Objek untuk menyimpan profil user, saldo internal, dan akumulasi yield.
+JavaScript
+const users = {
+  "0xAddress...": { 
+    total_deposit: 0, 
+    total_claimed_yield: 0, 
+    vUSD_balance: 0 
+  }
+};
+
+
+
+
+Leaders & Subscriptions Store: Array untuk menyimpan daftar trader (Leader) dan relasi pengikutnya.
+JavaScript
+const leaders = [
+  { address: "0x...", username: "ProTrader", win_rate: 85, total_pnl: 1200 }
+];
+const subscriptions = []; // Menyimpan { follower, leader, margin, leverage, sl }
+
+
+
+
+Trades & Price Cache: Digunakan untuk mencatat histori trade dan caching harga terbaru dari Pyth Oracle.
+JavaScript
+const activeTrades = []; 
+const priceCache = { "ETH/USD": 3500.50 };
+
+
+
+
+2. API Endpoints (Express.js)
+Backend akan menyediakan REST API yang sangat ringan untuk dikonsumsi oleh Next.js.
+GET /api/v1/leaders: Mengambil daftar Leader teratas dari memori untuk ditampilkan di tabel leaderboard.
+GET /api/v1/user/:address/vault: Mengambil saldo vUSD dan estimasi yield berdasarkan porsi kepemilikan user di Vault.
+GET /api/v1/stats: Menyajikan metrik global seperti Total TVL dan Volume trading untuk dashboard utama.
+POST /api/v1/sync: Endpoint internal (opsional) untuk memicu sinkronisasi manual antara state on-chain dan memori backend jika diperlukan.
+3. Security, Edge Cases & Risk Mitigation
+Meskipun disederhanakan, aspek keamanan tetap dijaga pada level logika:
+Oracle Validation: Backend akan selalu melakukan pengecekan price_age dari Pyth Network. Jika data harga sudah terlalu lama (stale), Keeper tidak akan menembakkan transaksi executeSL untuk menghindari front-running.
+Slippage Protection: Parameter max_slippage akan dicek oleh smart contract saat Keeper mencoba melakukan mirror trade. Jika harga melesat terlalu jauh dari harga entry Leader, transaksi akan gagal secara otomatis.
+Error Handling: Menggunakan try-catch blok yang solid di dalam loop Keeper agar jika satu transaksi gagal (misal karena gas habis), proses monitoring harga tetap berjalan untuk posisi lainnya.
+4. Detailed Fee Structure & Aliran Uang
+Protokol dirancang agar sustainable dengan pembagian fee sebagai berikut:
+Trading Fee (0.1%): Diambil dari setiap posisi yang ditutup.
+70% untuk pemegang vUSD (sebagai yield bagi mereka yang pernah loss).
+20% untuk Leader (insentif performa).
+10% untuk Protocol Treasury (biaya operasional gas Keeper).
+No-Loss Mechanism: Setiap $1 yang hilang saat Stop Loss dialokasikan 100% untuk memperkuat likuiditas Vault, sementara user mendapatkan ganti berupa 1 vUSD.
+5. Deployment & Quick Infrastructure
+Untuk kecepatan eksekusi selama hackathon, infrastruktur akan dibuat seminimalis mungkin:
+Host: Vercel (untuk Frontend Next.js) dan Railway atau Render (untuk Backend Express.js) karena mendukung auto-deployment dari GitHub.
+Monad RPC: Menggunakan RPC URL resmi dari testnet Monad.
+Private Key Management: Menggunakan variabel lingkungan (.env) untuk menyimpan private key akun Keeper yang berisi saldo gas token untuk eksekusi transaksi otomatis.

@@ -1,0 +1,31 @@
+# Smart contracts (Foundry)
+sc/lib
+sc/out
+sc/cache
+sc/broadcast
+sc/.env
+sc/.env.local
+
+# Backend (Express keeper/indexer)
+be/node_modules
+be/dist
+be/.env
+be/.env.local
+be/.env.*.local
+
+# Frontend (Next.js)
+fe/node_modules
+fe/.next
+fe/.vercel
+fe/.env
+fe/.env.local
+fe/.env.*.local
+fe/tsconfig.tsbuildinfo
+fe/next-env.d.ts
+
+# Misc
+.DS_Store
+*.log
+npm-debug.log*
+
+reference

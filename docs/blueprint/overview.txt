@@ -1,0 +1,41 @@
+1. Executive Summary (Overview Konsep)
+Ini adalah platform Decentralized Perpetual Exchange (DEX) di jaringan Monad yang menggabungkan copy-trading dengan inovasi finansial "Loss-to-LP".
+Masalah utama di platform copy-trading biasa adalah saat Leader salah ambil posisi, follower kehilangan uangnya selamanya ke pasar. Platform ini memecahkan masalah tersebut dengan bertindak sebagai Internal Liquidity Provider. Ketika follower mengalami kerugian (Stop Loss), uang tersebut tidak hilang keluar ekosistem, melainkan otomatis dikonversi menjadi porsi kepemilikan Likuiditas (LP) di dalam Vault platform.
+Singkatnya: Kerugian trading hari ini berubah menjadi aset yang menghasilkan yield pasif seumur hidup.
+
+2. Core Mechanics (Logika Utama)
+Fractional Margin + Leverage: User tidak mempertaruhkan seluruh depositnya. Jika deposit $100, mereka bisa mengalokasikan hanya $1 untuk copy trade dengan leverage 10x (mendapatkan posisi $10). Sisa $99 aman di saldo utama.
+Internal Counterparty: DEX ini menjadi lawan main dari setiap trade. Semua likuiditas berasal dari Vault platform itu sendiri.
+The "Loss-to-LP" Engine: Jika trade rugi $0.5, uang itu masuk ke Vault dan dikunci permanen. Sebagai gantinya, user secara otomatis bergeser statusnya menjadi Liquidity Provider senilai $0.5 tersebut.
+Receipt Token: Untuk menjaga aspek psikologis bahwa uangnya tidak "hilang", sistem mencetak token bukti (misalnya vUSD atau locked-LP) senilai kerugian tersebut dan dikirim ke wallet user. Token ini adalah "tiket" untuk mengklaim yield.
+
+3. User Journey (Flow Pengguna)
+Fase 1: Onboarding & Setup
+User deposit USDC (misal $100) ke akun trading platform.
+User melihat daftar Leader/Trader yang bisa di-copy.
+User mengatur parameter: Pilih Leader A, alokasi margin $1, leverage 10x, dan set Stop Loss maksimal 50% (maksimal rugi $0.5).
+Fase 2: Eksekusi & Resolusi
+Skenario A (Profit): Leader menang. User mendapat kembali margin $1 + profit secara tunai (USDC) ke saldo akun.
+Skenario B (Loss): Leader kalah dan menyentuh SL. Posisi ditutup.
+Sisa margin $0.5 kembali ke saldo akun (USDC liquid).
+Kerugian $0.5 dialihkan secara internal ke Yielding Vault (dikunci permanen).
+User menerima token $0.5 vUSD (Receipt LP) di wallet-nya.
+Fase 3: Masa Depan (Yield Claiming)
+User membuka halaman Vault Dashboard.
+Karena memegang vUSD, user memiliki hak atas persentase pendapatan platform.
+User menekan tombol "Claim Yield" dan mendapatkan USDC liquid dari akumulasi fee DEX. Ini bisa dilakukan kapan saja, selamanya.
+
+4. Key Features (Fitur Utama)
+One-Click Copy Trade: Experience semulus aplikasi Web2. Tidak ada popup wallet berkali-kali untuk setiap trade, cukup satu kali persetujuan di awal (bisa memanfaatkan session keys atau account abstraction di Monad).
+Leaderboard & Reputation Engine: Menampilkan trader terbaik berdasarkan Win Rate, PnL, dan jumlah follower.
+Perpetual Yielding Vault: Dashboard khusus untuk memantau "aset kerugian" yang sedang bekerja menghasilkan yield. Menampilkan metrik seperti Total Value Locked (TVL) dan APR secara transparan.
+Secondary Market (Opsional): Fitur untuk memperjualbelikan token vUSD tadi. Jika user butuh uang tunai cepat dan tidak mau menunggu yield, mereka bisa menjual bukti LP-nya ke orang lain dengan sedikit diskon.
+UI/UX Modern & Minimalis: Antarmuka trading tidak perlu terlihat seperti terminal hacker yang membingungkan. Mengusung elemen desain yang sangat clean, mengandalkan bentuk geometris tegas, layout ruang putih yang lega, serta ikonografi flat vector yang intuitif tanpa teks yang menumpuk.
+
+5. Revenue Model (Bisnis Protokol)
+Bagaimana platform ini menjadi bisnis yang sangat menguntungkan tanpa harus nombok uang asuransi?
+Trading Fees: Setiap open/close posisi (baik copy trade maupun manual) dikenakan fee standar DEX.
+Vault Activity Fees: Memungut sekian persen fee setiap kali ada user yang melakukan Deposit langsung ke Vault, Withdrawal (jika ada fitur emergency exit), atau Claim Yield.
+Performance Fee (Opsional): Potongan kecil dari keuntungan follower yang diberikan sebagian untuk Leader dan sebagian untuk treasury platform.
+Dengan flow dan overview non-teknis ini, fondasi produknya sudah sangat solid. TVL akan terus naik otomatis setiap kali ada yang loss, membuat DEX semakin kuat seiring berjalannya waktu
+

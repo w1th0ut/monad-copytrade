@@ -1,0 +1,36 @@
+Berikut adalah technical flow lengkap dari "No-Loss Copy Trade DEX":
+Phase 1: Onboarding & Deposit (Frontend $\rightarrow$ Smart Contract)
+User Connect: User menghubungkan wallet di aplikasi (berbasis Wagmi/Viem).
+Approve Token: User memanggil fungsi approve pada smart contract USDC untuk memberikan izin kepada Vault.sol menggunakan dananya.
+Deposit: User memanggil depositLiquidity(amount) di Vault.sol.
+State Change (On-Chain): Vault.sol menarik USDC dari wallet user. Saldo internal idleBalance[user] bertambah.
+Event Emit: DepositReceived(user, amount).
+Indexing: Express.js Backend via viem listener mendeteksi event ini dan memperbarui saldo user di In-Memory Store agar dashboard Next.js langsung menampilkan saldo yang up-to-date.
+Phase 2: Konfigurasi Copy Trade
+Pilih Leader: Di UI, user memilih Leader dan mengatur parameter (Margin: $1, Leverage: 10x, SL: 50%).
+Subscribe: Frontend mengirim transaksi pemanggilan fungsi followLeader(leader, margin, leverage, sl) ke CopyTradeRegistry.sol.
+State Change (On-Chain): Kontrak menyimpan konfigurasi ini dalam mapping.
+Event Emit: FollowerAdded(leader, follower, config).
+Phase 3: Eksekusi Mirror Trade (The Keeper Cascade) Karena Monad tidak punya Somnia Reactivity, kita mereplikasinya menggunakan Express.js Keeper.
+Leader Trading: Leader memanggil openPosition(...) di TradingEngine.sol.
+Event Detection: Fungsi tersebut meng-emit PositionOpened (leader, details). Express.js listener mendeteksinya dalam hitungan milidetik.
+Batch Execution: Express.js Keeper menarik daftar semua follower dari In-Memory Store (atau memanggil view function on-chain jika memori ter-reset). Keeper menyusun satu transaksi batch besar dan memanggil executeMirrorTrade(leader, followers[]) ke node Monad.
+State Change (On-Chain): TradingEngine.sol memverifikasi batch tersebut. Untuk setiap follower, kontrak mengunci margin $1 dari idleBalance[user] dan mencatat status posisi terbuka senilai $10.
+Phase 4: Resolusi & "Loss-to-LP" Engine (Inti Protokol) Mari kita simulasikan saat posisi menyentuh Stop Loss (Loss maksimal $0.5).
+Price Monitoring: Express.js Keeper (via background task/setInterval) terus memantau feed harga (misal dari Pyth Network). Ketika harga menyentuh batas SL, Keeper langsung menembak fungsi executeSL(positionId) di TradingEngine.sol.
+Close Position: TradingEngine.sol menutup posisi secara paksa.
+Penyelesaian Margin:
+Kontrak mengambil sisa margin yang selamat ($0.5) dan mengembalikannya ke idleBalance[user].
+Kontrak mendeteksi adanya kerugian ($0.5).
+Loss-to-LP Trigger: TradingEngine.sol memanggil fungsi internal Vault.lockLossToLP(user, 0.5).
+State Change (Vault): Vault mengambil uang $0.5 (yang secara teknis dimenangkan oleh Vault sebagai counterparty) dan menguncinya ke dalam pool likuiditas permanen.
+Minting Receipt: Vault mencetak (mint) token 0.5 vUSD (ERC-20) dan mengirimkannya langsung ke wallet user sebagai bukti LP.
+Event Emit: LossVaulted(user, 0.5, vUSD_minted).
+Phase 5: Akumulasi Yield & Claiming Uang sudah terkunci, dan user sekarang memegang vUSD. Bagaimana yield bekerja secara teknis?
+Fee Accumulation: Setiap ada transaksi di DEX, TradingEngine.sol memotong fee (misal 0.1%). Fee USDC ini dikirim dan ditampung di kontrak Vault.sol pada variabel accumulatedYield.
+Claiming Yield (Frontend): User membuka halaman Vault di Next.js. Aplikasi membaca saldo vUSD di wallet user dan memanggil view function di kontrak untuk mengecek porsi yield.
+Perhitungan Matematis: Smart contract menggunakan formula proporsional saat user menekan tombol Claim:
+$$Yield = \left(\frac{User\_vUSD\_Balance}{Total\_vUSD\_Supply} \right) \times Vault\_Accumulated\_Yield$$
+Eksekusi Claim: User memanggil fungsi claimYield() di Vault.sol.
+State Change: Kontrak mengirim USDC (liquid) sebesar nilai Yield langsung ke idleBalance[user] atau wallet utama mereka. Saldo accumulatedYield global dikurangi.
+vUSD milik user tidak dibakar (burned), sehingga mereka bisa terus melakukan claim bulan depan, tahun depan, dan seterusnya.

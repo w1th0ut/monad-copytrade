@@ -1,0 +1,47 @@
+1. Pengganti "Somnia Reactivity" di Monad Monad adalah jaringan EVM-equivalent yang sangat cepat (10.000 TPS) dengan parallel execution, tetapi tidak memiliki fitur native reactivity (di mana smart contract merespons event secara otomatis tanpa trigger eksternal) seperti Somnia.
+Sebagai gantinya untuk versi MVP Hackathon ini, arsitekturnya akan menggunakan In-Memory Express.js Keeper.
+Cara Kerja: Sebuah background task (menggunakan setInterval sederhana) di dalam Node.js akan terus memantau harga. Begitu kondisi harga menyentuh Stop Loss (SL), backend ini langsung menembakkan transaksi eksekusi (executeStopLoss) ke smart contract.
+Kenapa ini cocok untuk MVP: Mengurangi kompleksitas setup infrastruktur. Backend hanya berjalan selama proses live demo hackathon, menjamin latency eksekusi hampir instan tanpa overhead database.
+2. Tech Stack Overview
+Smart Contracts: Solidity & Foundry (Sangat optimal untuk testing sistem keuangan EVM).
+Backend / Keepers: Node.js & Express.js. Menggunakan arsitektur in-memory murni agar pengembangan sangat cepat. Jika server restart, state akan ter-reset, namun sangat memadai untuk demo 7 jam.
+Frontend: Next.js & TailwindCSS. Pendekatan UI/UX difokuskan pada estetika clean, modern, dan minimalist. Menggunakan elemen geometric shapes atau flat vector yang rapi untuk membuat dashboard trading tidak terlihat menakutkan bagi user. Web3 integration menggunakan viem dan wagmi.
+Database: In-Memory Variables (menggunakan objek atau Map di dalam JavaScript) sebagai pengganti total dari PostgreSQL dan Redis.
+3. Arsitektur Smart Contract (Solidity) Fokus utama di sini adalah keamanan dana (Vault) dan logika copy trade.
+Vault.sol
+Fungsi: Mengelola pool likuiditas (USDC). Bertindak sebagai "Bandar" / lawan main dari semua trade.
+Key Functions:
+depositLiquidity(amount): User atau protokol menambah likuiditas manual.
+lockLossToLP(user, amount): Dipanggil oleh Trading Engine saat user kena SL. Mengunci saldo ke dalam vault dan mencetak token vUSD.
+claimYield(): Menghitung porsi keuntungan DEX dan mengirimkannya ke pemegang vUSD.
+TradingEngine.sol
+Fungsi: Mengelola posisi trading perpetual, menghitung leverage, PnL (Profit & Loss), dan memungut trading fee.
+Key Functions:
+openPosition(...): Membuka trade, mengambil margin, dan mengecek likuiditas Vault.
+closePosition(...): Menutup trade. Jika rugi, memanggil lockLossToLP di Vault.
+liquidate/executeSL(...): Fungsi khusus yang hanya bisa dipanggil oleh Keeper untuk mengeksekusi SL secara presisi.
+CopyTradeRegistry.sol
+Fungsi: Menyimpan relasi antara Leader dan Follower, serta batasan risikonya.
+Key Functions:
+followLeader(...): Mendaftarkan konfigurasi copy trade.
+unfollowLeader(...): Berhenti mengikuti.
+executeMirrorTrade(...): Dipanggil otomatis ketika Leader membuka posisi.
+vUSD.sol (Receipt Token)
+Fungsi: Standar ERC-20 token. Dicetak secara otomatis oleh Vault.sol saat terjadi lockLossToLP. Bukti kepemilikan LP yang yield-bearing.
+4. Arsitektur Backend & Keepers (Express.js) Backend tidak menyimpan private key user atau memegang dana. Tugasnya murni sebagai "Mata dan Tangan" otomatis dari protokol. Untuk menjaga kerapian, kita menerapkan struktur Clean Architecture yang disederhanakan:
+src/delivery/api.js: Endpoint Express.js yang melayani request dari Frontend (seperti menyajikan data leaderboard dan statistik TVL).
+src/usecase/indexer.js: Fungsi yang mendengarkan event PositionOpened, PositionClosed, atau FollowerAdded dari smart contract (menggunakan viem listener), lalu menyimpannya ke memori untuk ditampilkan di UI.
+src/usecase/keeper.js: Service berkinerja tinggi yang melakukan looping untuk memantau harga oracle (misal: Pyth Network). Jika harga saat ini $\ge$ harga Stop Loss posisi, Keeper menyusun transaksi dan memanggil executeSL() di TradingEngine.sol.
+src/repository/memory.js: Berisi variabel global (seperti const users = new Map()) untuk menyimpan state leaderboard dan profil sementara.
+5. Arsitektur Frontend (Next.js) Berfokus pada penyajian data real-time tanpa mengorbankan performa browser.
+app/page.tsx (Dashboard Utama)
+Menampilkan ringkasan metrik global: Total TVL Vault, Total Volume, dan ajakan Call to Action (CTA) untuk copy trade.
+app/leaderboard/page.tsx
+Menampilkan daftar Leader. Menggunakan tabel rapi dengan metrik Win Rate dan PnL. Ada tombol "Copy" di setiap baris.
+components/TradeModal.tsx
+Popup atau panel slide-out saat user mengklik "Copy" pada seorang Leader. Berisi slider untuk menentukan alokasi Margin, Leverage, dan batas maksimal Stop Loss (SL).
+app/vault/page.tsx (Perpetual Yielding Dashboard)
+Halaman khusus untuk fitur "No-Loss". Logic: Membaca saldo vUSD dari wallet user. Menampilkan perhitungan estimasi yield yang bisa diklaim, tombol Claim Yield, dan visualisasi seberapa banyak kerugian masa lalu yang sudah berhasil "dipulihkan" oleh yield.
+hooks/useMonadContract.ts
+Berisi fungsi wrapper berbasis viem untuk mempermudah pemanggilan fungsi smart contract seperti deposit, follow, dan claim dari komponen UI.
+
