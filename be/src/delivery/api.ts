@@ -40,7 +40,12 @@ export function createApi(keeper: KeeperService) {
   });
 
   app.get("/api/v1/leaders", (_req, res) => {
-    res.json({ data: getLeaders() });
+    getLeaders()
+      .then((data) => res.json({ data }))
+      .catch((err: Error) => {
+        console.error("[leaders] chain read failed:", err.message);
+        res.json({ data: [] });
+      });
   });
 
   app.get("/api/v1/stats", (_req, res) => {

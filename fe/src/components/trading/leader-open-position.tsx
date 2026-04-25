@@ -5,7 +5,6 @@ import { keccak256, toBytes } from "viem";
 import { useAccount } from "wagmi";
 import {
   useIdleBalance,
-  useLeaderUsername,
   useOpenPosition,
 } from "@/hooks/use-monad-contract";
 import { useProtocolReadiness } from "@/hooks/use-protocol-readiness";
@@ -16,10 +15,14 @@ const PAIRS = [
   { label: "SOL/USD", defaultPrice: 144 },
 ] as const;
 
-export function LeaderOpenPosition() {
+interface LeaderOpenPositionProps {
+  username?: string;
+  refetchUsername?: () => void;
+}
+
+export function LeaderOpenPosition({ username }: LeaderOpenPositionProps) {
   const { address } = useAccount();
   const { isConnected, isOnMonad, contractsReady } = useProtocolReadiness();
-  const { data: username } = useLeaderUsername(address);
   const { data: idleBalance } = useIdleBalance();
   const { openPosition, isPending, isConfirming, hash } = useOpenPosition();
 
@@ -63,7 +66,7 @@ export function LeaderOpenPosition() {
     <section className="border border-line bg-canvas">
       <div className="border-b border-line px-4 py-4">
         <h2 className="text-sm font-semibold uppercase tracking-[0.22em] text-foreground">
-          Leader desk — open position
+          Leader desk — {username || "open position"}
         </h2>
         <p className="mt-2 text-xs leading-5 text-muted">
           Your followers will auto-mirror this trade (keeper processes the{" "}

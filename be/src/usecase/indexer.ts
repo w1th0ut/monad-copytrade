@@ -1,15 +1,57 @@
 import {
   activeTrades,
-  leaders,
   priceCache,
   stats,
   subscriptions,
   users,
   vaultActivity,
 } from "../repository/memory.js";
+import { copyTradeRegistryAbi, publicClient } from "../lib/chain.js";
+import { env } from "../config/env.js";
 
-export function getLeaders() {
-  return leaders;
+export async function getLeaders() {
+  const registryAddress = env.COPY_TRADE_REGISTRY_ADDRESS as `0x${string}` | undefined;
+  if (!registryAddress) return [];
+
+  const addresses = await publicClient.readContract({
+    address: registryAddress,
+    abi: copyTradeRegistryAbi,
+    functionName: "getRegisteredLeaders",
+  });
+
+  if (addresses.length === 0) return [];
+
+  const [usernames, followerLists] = await Promise.all([
+    Promise.all(
+      addresses.map((addr) =>
+        publicClient.readContract({
+          address: registryAddress,
+          abi: copyTradeRegistryAbi,
+          functionName: "leaderUsername",
+          args: [addr],
+        }),
+      ),
+    ),
+    Promise.all(
+      addresses.map((addr) =>
+        publicClient.readContract({
+          address: registryAddress,
+          abi: copyTradeRegistryAbi,
+          functionName: "getFollowers",
+          args: [addr],
+        }),
+      ),
+    ),
+  ]);
+
+  return addresses.map((addr, i) => ({
+    address: addr,
+    username: usernames[i] || addr.slice(0, 8),
+    style: "—",
+    winRate: 0,
+    totalPnl: 0,
+    followers: followerLists[i].length,
+  }));
 }
 
 export function getStats() {

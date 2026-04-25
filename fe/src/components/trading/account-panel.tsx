@@ -5,6 +5,7 @@ import { formatUnits } from "viem";
 import {
   useDeposit,
   useIdleBalance,
+  useLeaderUsername,
   useMintUsdc,
   useRegisterLeader,
   useUsdcApproval,
@@ -15,9 +16,11 @@ import {
 import { useProtocolReadiness } from "@/hooks/use-protocol-readiness";
 import { protocolAddresses } from "@/lib/web3/contracts";
 import { parseUnits } from "viem";
+import { useAccount } from "wagmi";
 import { LeaderOpenPosition } from "@/components/trading/leader-open-position";
 
 export function AccountPanel() {
+  const { address } = useAccount();
   const { isConnected, isOnMonad, contractsReady, shortAddress } =
     useProtocolReadiness();
 
@@ -41,9 +44,18 @@ export function AccountPanel() {
     hash: registerHash,
   } = useRegisterLeader();
 
+  const {
+    data: leaderUsername,
+    refetch: refetchLeaderUsername,
+  } = useLeaderUsername(address);
+
   useEffect(() => {
     if (mintHash) refetchUsdc();
   }, [mintHash, refetchUsdc]);
+
+  useEffect(() => {
+    if (registerHash && !registerConfirming) refetchLeaderUsername();
+  }, [registerHash, registerConfirming, refetchLeaderUsername]);
 
   useEffect(() => {
     if (depositHash) {
@@ -151,34 +163,46 @@ export function AccountPanel() {
 
           {/* Register as Leader */}
           <Panel title="3. Register as Leader">
-            <p className="text-xs leading-5 text-muted">
-              Become a mentor — others can copy your trades.
-            </p>
-            <label className="block text-xs">
-              <span className="mb-1 block text-muted">Username</span>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="e.g. Delta K"
-                className="w-full rounded-2xl border border-line bg-panel px-3 py-2 text-sm text-foreground outline-none focus:border-accent"
-              />
-            </label>
-            <ActionButton
-              disabled={
-                !ready || registering || registerConfirming || !username.trim()
-              }
-              onClick={() => registerLeader(username.trim())}
-              label={
-                registering
-                  ? "Confirm in wallet..."
-                  : registerConfirming
-                    ? "Registering..."
-                    : registerHash
-                      ? "Registered"
-                      : "Register"
-              }
-            />
+            {leaderUsername ? (
+              <p className="text-xs leading-5 text-muted">
+                Registered as{" "}
+                <span className="font-semibold text-foreground">
+                  {leaderUsername as string}
+                </span>
+                . Leader desk is unlocked below.
+              </p>
+            ) : (
+              <p className="text-xs leading-5 text-muted">
+                Become a mentor — others can copy your trades.
+              </p>
+            )}
+            {!leaderUsername && (
+              <>
+                <label className="block text-xs">
+                  <span className="mb-1 block text-muted">Username</span>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="e.g. Delta K"
+                    className="w-full rounded-2xl border border-line bg-panel px-3 py-2 text-sm text-foreground outline-none focus:border-accent"
+                  />
+                </label>
+                <ActionButton
+                  disabled={
+                    !ready || registering || registerConfirming || !username.trim()
+                  }
+                  onClick={() => registerLeader(username.trim())}
+                  label={
+                    registering
+                      ? "Confirm in wallet..."
+                      : registerConfirming
+                        ? "Registering..."
+                        : "Register"
+                  }
+                />
+              </>
+            )}
           </Panel>
         </div>
 
@@ -196,7 +220,10 @@ export function AccountPanel() {
       </section>
 
       <div className="mt-6">
-        <LeaderOpenPosition />
+        <LeaderOpenPosition
+          username={leaderUsername as string | undefined}
+          refetchUsername={refetchLeaderUsername}
+        />
       </div>
     </main>
   );
