@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 :root {
+  --font-space-grotesk: "Bahnschrift", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  --font-ibm-plex-mono: "Cascadia Mono", "Consolas", "Courier New", monospace;
   --background: #060910;
   --foreground: #edf2ff;
   --canvas: #0a0f18;
